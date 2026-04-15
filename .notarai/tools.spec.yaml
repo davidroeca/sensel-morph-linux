@@ -1,0 +1,60 @@
+schema_version: "0.8"
+domain: software
+
+intent: >
+  End-user CLI tools that consume the sensel_morph package. Each tool is a
+  single-purpose entry point: device introspection, live monitoring, visual
+  debugging, uinput tablet bridge, MIDI bridge, and on-device config
+  management. Tools are thin; domain logic lives in sensel_morph.
+
+behaviors:
+  - name: morph_info_prints_device
+    given: "a Morph is connected and libsensel.so has been built"
+    then: "tools/morph_info.py opens the first device, prints firmware version, serial number, dimensions (width/height mm), and max contacts, and exits 0. It closes the device cleanly even on failure."
+  - name: morph_monitor_shows_live_contacts
+    given: "a Morph is connected"
+    then: "tools/morph_monitor.py displays a terminal view of active contacts (id, x/y mm, force g, state) updating at interactive rate."
+  - name: morph_visualizer_renders_contacts
+    given: "a Morph is connected and pygame is available"
+    then: "tools/morph_visualizer.py opens a window scaled to the device aspect ratio and draws each contact as a circle whose radius reflects area and opacity/color reflects force."
+  - name: morph_tablet_pen_mode
+    given: "--mode pen (default) and the user has uinput permission"
+    then: "the highest-force contact drives a virtual pen (BTN_TOOL_PEN, ABS_X/Y, ABS_PRESSURE) through evdev.UInput; other contacts are ignored; Krita and GIMP recognize the device with pressure."
+  - name: morph_tablet_multitouch_mode
+    given: "--mode multitouch"
+    then: "each contact is mapped to an ABS_MT_* slot and the device appears as a multi-touch digitizer in evtest."
+  - name: morph_midi_translates_contacts
+    given: "an active MIDI profile and a Morph connected"
+    then: "tools/morph_midi.py opens a virtual port via python-rtmidi and emits NOTE_ON/NOTE_OFF (or CC) events from contact events through the profile's regions, with velocity derived from the force curve."
+  - name: morph_config_roundtrip
+    given: "tools/morph_config.py dump > file.yaml; tools/morph_config.py load file.yaml"
+    then: "the device's behavior is unchanged; `dump` read after a `load` produces an equivalent file."
+
+constraints:
+  - "Every tool is runnable both as `python tools/<name>.py` and as a console script declared in pyproject.toml."
+  - "Tools exit with 0 on success, nonzero on device or permission errors, and print actionable remediation (e.g., 'add user to dialout group')."
+  - "Tools that write to uinput must print a clear message if /dev/uinput is not writable, naming the `input` group fix."
+
+invariants:
+  - "No tool holds the device handle longer than the work requires; handles are released on exit, including on exceptions and signals (SIGINT clean shutdown)."
+
+artifacts:
+  code:
+    - path: "tools/morph_info.py"
+      role: "Device introspection."
+    - path: "tools/morph_monitor.py"
+      role: "Terminal live contact monitor."
+    - path: "tools/morph_visualizer.py"
+      role: "Pygame contact visualizer."
+    - path: "tools/morph_tablet.py"
+      role: "uinput tablet bridge, pen and multitouch modes."
+    - path: "tools/morph_midi.py"
+      role: "MIDI bridge via python-rtmidi."
+    - path: "tools/morph_config.py"
+      role: "Read/write/reset on-device overlay configuration."
+
+dependencies:
+  - $ref: "./core.spec.yaml"
+    relationship: "tools consume sensel_morph package APIs (Device, Frame, Contact, regions, config)"
+  - $ref: "./profiles.spec.yaml"
+    relationship: "tablet and MIDI tools load YAML profiles to determine host-side mapping behavior"

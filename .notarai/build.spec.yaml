@@ -1,0 +1,36 @@
+schema_version: "0.8"
+domain: software
+
+intent: >
+  Packaging and build tooling. Declares the Python project via uv
+  (pyproject.toml + uv.lock) and drives compilation of the vendored
+  LibSensel C source via build.py. Users set up the project with two
+  commands: `uv sync` and `uv run python build.py`.
+
+behaviors:
+  - name: build_libsensel_so
+    given: "gcc and make are installed and lib/sensel-lib/ is present"
+    then: "build.py invokes `make` inside lib/sensel-lib/, and the resulting libsensel.so is discoverable by lib/sensel.py."
+  - name: build_fails_fast_on_missing_toolchain
+    given: "gcc or make is not on PATH"
+    then: "build.py exits with a non-zero status and a message pointing at the missing tool, not a cryptic subprocess traceback."
+  - name: declared_runtime_dependencies
+    given: "a user runs `uv sync`"
+    then: "python-rtmidi, pygame, evdev, pyserial, numpy, pyyaml, and pytest (dev) are installed into .venv/."
+
+constraints:
+  - "pyproject.toml targets Python >= 3.11 and declares the project name `sensel-morph-linux`."
+  - "The built libsensel.so is gitignored; only C source is checked in."
+  - "build.py is idempotent: re-running it after a successful build is a fast no-op or trivial rebuild."
+
+artifacts:
+  configs:
+    - path: "pyproject.toml"
+      role: "uv project metadata, Python version floor, runtime and dev dependencies, console script entry points for tools/."
+    - path: "uv.lock"
+      role: "Pinned dependency graph produced by `uv lock` / `uv sync`."
+    - path: ".gitignore"
+      role: "Ignores build outputs (libsensel.so, *.o), .venv/, __pycache__/, .pytest_cache/."
+  code:
+    - path: "build.py"
+      role: "Driver script: runs `make` in lib/sensel-lib/, surfaces toolchain errors, verifies libsensel.so was produced."

@@ -1,0 +1,71 @@
+schema_version: "0.8"
+domain: software
+
+intent: >
+  A Linux-native Python toolchain for the Sensel Morph pressure-sensitive
+  surface. Built on the vendored MIT LibSensel C source, it exposes the Morph
+  as a usable input device under Linux without any dependency on Sensel's
+  (now-defunct) proprietary SenselApp or cloud services. Primary use cases
+  are a drawing tablet (via uinput) and a MIDI controller, driven by YAML
+  profiles over the blank Innovator's overlay.
+
+constraints:
+  - "Python is the sole implementation language for host-side code. Rust/Zig rewrites are deferred until Python performance is demonstrably inadequate."
+  - "All Python dependencies are managed through uv and pinned in uv.lock."
+  - "One consumer process owns the device at a time; no daemon or IPC layer is introduced."
+  - "Mapping configuration lives in YAML profiles (one per mode), not in code."
+  - "The uinput tablet bridge supports two runtime-switchable presentations: single-pen-with-pressure (default) and multi-touch digitizer."
+  - "Hardware tests are gated on SENSEL_HARDWARE=1 and live under tests/hardware/; CI runs only pure-Python tests against recorded fixtures."
+
+invariants:
+  - "The vendored lib/sensel-lib/ C source is MIT-licensed and must remain unmodified in intent; Linux-specific build fixes are permitted but Windows/macOS source files may be removed."
+  - "No code in this project depends on LibSenselDecompress (the closed-source force-frame decompressor). Force-frame heatmap features are out of scope."
+  - "No code in this project depends on Sensel's cloud services, proprietary SenselApp binaries, or any non-MIT Sensel component."
+  - "The Python ctypes wrapper (lib/sensel.py) is the only module that touches ctypes directly; higher-level code in src/sensel_morph/ consumes typed dataclasses, never raw Structures."
+
+behaviors:
+  - name: end_to_end_bringup
+    given: "a fresh checkout, `uv sync`, and `uv run python build.py`"
+    then: "`uv run python tools/morph_info.py` prints real device info (firmware, serial, dimensions, max contacts) for a connected Morph."
+  - name: tablet_mode_pressure_in_krita
+    given: "a connected Morph, uinput permissions, and `tools/morph_tablet.py --mode pen`"
+    then: "Krita and GIMP recognize the virtual device and respond to pressure."
+  - name: midi_mode_audible_output
+    given: "a connected Morph and `tools/morph_midi.py --profile profiles/midi_drumpads.yaml`"
+    then: "a virtual MIDI port is visible in `aconnect -l` and routing it into a DAW or fluidsynth produces audible output driven by touch."
+
+subsystems:
+  - $ref: "./libsensel.spec.yaml"
+  - $ref: "./build.spec.yaml"
+  - $ref: "./core.spec.yaml"
+  - $ref: "./tools.spec.yaml"
+  - $ref: "./profiles.spec.yaml"
+  - $ref: "./tests.spec.yaml"
+
+exclude:
+  - "lib/sensel-lib/build/**"
+  - "lib/sensel-lib/**/*.o"
+  - "lib/sensel-lib/libsensel.so"
+  - "lib/sensel-lib/LICENSE*"
+  - "**/__pycache__/**"
+  - ".venv/**"
+  - "uv.lock"
+  - ".notarai/**"
+  - ".claude/**"
+  - ".opencode/**"
+  - ".gitignore"
+  - ".mcp.json"
+  - "project_idea.md"
+
+artifacts:
+  docs:
+    - path: "AGENTS.md"
+      role: "Top-level agent instructions; points at notarai workflows."
+    - path: "CLAUDE.md"
+      role: "Claude-specific shim that includes AGENTS.md."
+    - path: "README.md"
+      role: "User-facing install, udev rules, and usage guide."
+
+output:
+  type: app
+  runtime: native

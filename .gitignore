@@ -1,1 +1,9 @@
 .notarai/.cache/
+__pycache__/
+*.pyc
+.venv/
+lib/sensel-lib/build/
+lib/sensel-lib/libsensel.so
+lib/libsensel.so
+lib/sensel-lib/**/*.o
+.pytest_cache/

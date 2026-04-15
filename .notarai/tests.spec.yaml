@@ -1,0 +1,36 @@
+schema_version: "0.8"
+domain: software
+
+intent: >
+  Automated tests. All pure-Python logic (region hit-testing, profile loading,
+  MIDI mapping, pressure curves, frame parsing) is covered by pytest against
+  JSON fixtures recorded from real hardware. Hardware-dependent tests are
+  opt-in via an environment variable so CI never requires a Morph.
+
+behaviors:
+  - name: pure_python_tests_no_hardware
+    given: "a fresh checkout with `uv sync`"
+    then: "`uv run pytest` passes without a Morph connected and without libsensel.so built."
+  - name: hardware_tests_opt_in
+    given: "SENSEL_HARDWARE=1 and a connected Morph"
+    then: "tests under tests/hardware/ run and verify end-to-end behavior; without the env var, they are skipped."
+  - name: frame_fixture_replay
+    given: "a recorded JSON frame fixture"
+    then: "tests/test_frames.py parses it and asserts expected Contact counts/states, independent of hardware."
+
+constraints:
+  - "No test imports lib.sensel at module import time unless it is clearly a hardware test (skipped by default)."
+  - "Fixtures live under tests/fixtures/ and are checked into the repo."
+
+artifacts:
+  tests:
+    - path: "tests/test_regions.py"
+      role: "Unit tests for region hit-testing (rect + polygon)."
+    - path: "tests/test_config.py"
+      role: "Profile loader validation tests, happy path and errors."
+    - path: "tests/test_frames.py"
+      role: "Frame/Contact parsing tests against recorded JSON fixtures."
+    - path: "tests/hardware/**"
+      role: "Opt-in hardware-in-the-loop tests (SENSEL_HARDWARE=1)."
+    - path: "tests/fixtures/**"
+      role: "Recorded frame data used by pure-Python tests."

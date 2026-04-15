@@ -22,14 +22,8 @@
 # DEALINGS IN THE SOFTWARE.
 ##########################################################################
 
-import sys
-
+import os
 from ctypes import *
-from sensel_register_map import *
-import platform
-
-sensel_lib = None
-sensel_lib_decompress = None
 
 SENSEL_MAX_DEVICES  = 16
 
@@ -48,19 +42,34 @@ CONTACT_START   = 1
 CONTACT_MOVE    = 2
 CONTACT_END     = 3
 
-platform_name = platform.system()
-if platform_name == "Windows":
-    python_is_x64 = sys.maxsize > 2**32
-    if python_is_x64:
-        sensel_lib_decompress = windll.LoadLibrary("C:\\Program Files\\Sensel\\SenselLib\\x64\\LibSenselDecompress.dll")
-        sensel_lib = windll.LoadLibrary("C:\\Program Files\\Sensel\\SenselLib\\x64\\LibSensel.dll")
-    else:
-        sensel_lib_decompress = windll.LoadLibrary("C:\\Program Files\\Sensel\\SenselLib\\x86\\LibSenselDecompress.dll")
-        sensel_lib = windll.LoadLibrary("C:\\Program Files\\Sensel\\SenselLib\\x86\\LibSensel.dll")
-elif platform_name == "Darwin":
-    sensel_lib = cdll.LoadLibrary("/usr/local/lib/libSensel.dylib")
-else:
-    sensel_lib = cdll.LoadLibrary("/usr/lib/libsensel.so")
+# Linux-only: resolve libsensel.so relative to this wrapper file. The build
+# driver (build.py) runs `make` inside lib/sensel-lib/ which produces the .so
+# under lib/sensel-lib/build/release/nopressure/ and then copies (or symlinks)
+# it alongside this file. LibSenselDecompress is intentionally absent: it is
+# closed-source and force-frame decompression is out of scope.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_CANDIDATES = [
+    os.path.join(_HERE, "libsensel.so"),
+    os.path.join(_HERE, "sensel-lib", "libsensel.so"),
+    os.path.join(_HERE, "sensel-lib", "build", "release", "nopressure", "libsensel.so"),
+]
+_lib_path = next((p for p in _CANDIDATES if os.path.exists(p)), None)
+if _lib_path is None:
+    raise ImportError(
+        "libsensel.so not found. Run `uv run python build.py` to build it. "
+        "Searched: " + ", ".join(_CANDIDATES)
+    )
+sensel_lib = cdll.LoadLibrary(_lib_path)
+sensel_lib_decompress = None  # LibSenselDecompress is closed-source; not used.
+
+class SenselFirmwareInfo(Structure):
+    _fields_ = [("fw_protocol_version", c_ubyte),
+                ("fw_version_major", c_ubyte),
+                ("fw_version_minor", c_ubyte),
+                ("fw_version_build", c_ushort),
+                ("fw_version_release", c_ubyte),
+                ("device_id", c_ushort),
+                ("device_revision", c_ubyte)]
 
 class SenselSensorInfo(Structure):
     _fields_ = [("max_contacts", c_ubyte), 
@@ -140,6 +149,11 @@ def close(handle):
 def softReset(handle):
     error = sensel_lib.senselSoftReset(handle)
     return error
+
+def getFirmwareInfo(handle):
+    info = SenselFirmwareInfo()
+    error = sensel_lib.senselGetFirmwareInfo(handle, byref(info))
+    return (error, info)
 
 def getSensorInfo(handle):
     info = SenselSensorInfo(0,0,0,0,0)

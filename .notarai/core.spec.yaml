@@ -1,0 +1,43 @@
+schema_version: "0.8"
+domain: software
+
+intent: >
+  The `sensel_morph` Python package: a small, typed, hardware-agnostic layer
+  on top of the ctypes wrapper. Tools never touch ctypes directly; they
+  consume Frame/Contact dataclasses, a context-managed Device handle, a
+  regions/hit-testing module, and a YAML config loader.
+
+behaviors:
+  - name: device_context_manager
+    given: "a caller uses `with Device() as dev:`"
+    then: "the device is opened, scanning is started on enter, scanning is stopped and the device is closed on exit even if the body raises."
+  - name: typed_frame_iteration
+    given: "an open Device"
+    then: "iterating yields Frame objects containing a list of Contact dataclasses; no ctypes Structure leaks into caller code."
+  - name: region_hit_testing
+    given: "a loaded set of regions (rectangles or polygons in normalized device coordinates) and a Contact"
+    then: "regions.hit(contact) returns the first matching region or None, stable across frames for a given contact id."
+  - name: config_loading_validates
+    given: "a YAML profile on disk"
+    then: "config.load(path) returns a validated profile object or raises a clear error naming the offending key."
+
+constraints:
+  - "All public dataclasses are frozen and use PEP 604 type hints."
+  - "No module under src/sensel_morph/ imports ctypes directly; access to hardware goes through lib.sensel."
+  - "Region coordinates in YAML are normalized to [0.0, 1.0] on both axes; conversion to mm happens inside sensel_morph when needed."
+
+invariants:
+  - "Frame dataclasses are immutable snapshots; mutating a yielded frame must not affect subsequent frames."
+
+artifacts:
+  code:
+    - path: "src/sensel_morph/__init__.py"
+      role: "Package entry; re-exports Device, Frame, Contact, load_profile."
+    - path: "src/sensel_morph/device.py"
+      role: "Context-manager wrapping open/scan-start/scan-stop/close; frame generator."
+    - path: "src/sensel_morph/frames.py"
+      role: "Frame and Contact dataclasses plus conversion helpers from ctypes Structures."
+    - path: "src/sensel_morph/regions.py"
+      role: "YAML region schema (rect/polygon) and hit-testing."
+    - path: "src/sensel_morph/config.py"
+      role: "YAML profile loader with schema validation and helpful error messages."

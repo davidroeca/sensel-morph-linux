@@ -1,0 +1,35 @@
+schema_version: "0.8"
+domain: software
+
+intent: >
+  YAML profiles that configure host-side mapping behavior for the tablet and
+  MIDI tools. Profiles are the user-editable surface of the project: changing
+  a profile should change behavior without touching code.
+
+behaviors:
+  - name: tablet_default_profile_loads
+    given: "profiles/tablet_default.yaml"
+    then: "tools/morph_tablet.py loads it to determine pressure curve, active surface bounds, and any button regions."
+  - name: midi_drumpads_profile_maps_grid
+    given: "profiles/midi_drumpads.yaml"
+    then: "tools/morph_midi.py exposes a 4x4 pad grid; each pad emits NOTE_ON at CONTACT_START with velocity from peak force, and NOTE_OFF at CONTACT_END."
+  - name: midi_keyboard_profile_polyphonic_aftertouch
+    given: "profiles/midi_keyboard.yaml"
+    then: "a single-row pseudo-piano layout emits polyphonic aftertouch driven by sustained contact force."
+
+constraints:
+  - "Region coordinates are normalized to [0.0, 1.0] across both axes."
+  - "Every profile declares a schema version and a mode (tablet | midi)."
+  - "Force-to-velocity and force-to-aftertouch curves are expressed as named curves or piecewise linear control points, never embedded Python."
+
+artifacts:
+  configs:
+    - path: "profiles/tablet_default.yaml"
+      role: "Default pen-mode tablet profile (pressure curve, active area)."
+    - path: "profiles/midi_drumpads.yaml"
+      role: "4x4 drum pad MIDI layout starter profile."
+    - path: "profiles/midi_keyboard.yaml"
+      role: "Single-row pseudo-piano with polyphonic aftertouch starter profile."
+
+open_questions:
+  - "Pressure curve defaults for tablet_default.yaml will be tuned after real Krita/GIMP use; treat the initial curve as provisional."

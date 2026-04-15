@@ -1,0 +1,54 @@
+schema_version: "0.8"
+domain: software
+
+intent: >
+  The vendored LibSensel C library plus its Python ctypes wrapper. Provides
+  the lowest-level access to the Sensel Morph: device enumeration, open/close,
+  scan start/stop, frame retrieval, and register read/write. This subsystem
+  is a thin, near-verbatim port of Sensel's MIT C source to Linux; the Python
+  wrapper is the single choke point through which all higher-level code
+  reaches the hardware.
+
+behaviors:
+  - name: load_shared_library_on_linux
+    given: "lib/sensel-lib/libsensel.so has been built and lib/sensel.py is imported"
+    then: "the module resolves libsensel.so by path relative to the wrapper file (not from /usr/lib or Windows paths) and loads it via ctypes.CDLL."
+  - name: enumerate_devices
+    given: "a Morph is connected over USB and the user is in the dialout group (or has udev permissions on /dev/ttyACM*)"
+    then: "sensel.getDeviceList() returns at least one SenselDeviceID populated with the serial number and com port."
+  - name: open_and_query_sensor_info
+    given: "a device index from getDeviceList()"
+    then: "openDeviceByID() returns a non-null handle and getSensorInfo() returns max_contacts, num_rows, num_cols, width (mm), height (mm)."
+  - name: no_pressure_decompressor_dependency
+    given: "the wrapper is imported on any platform"
+    then: "it does not attempt to load LibSenselDecompress; pressure-mask frames are unsupported and documented as such."
+
+constraints:
+  - "lib/sensel-lib/ C source is built as a shared object named libsensel.so via the project's Makefile."
+  - "The Makefile SRC list compiles only sensel.c, sensel_register.c, and sensel_serial_linux.c (no Windows serial source)."
+  - "lib/sensel.py is the ONLY module permitted to import ctypes directly; it exposes plain Python functions returning (error, value) tuples that match the C API."
+
+invariants:
+  - "Windows-only source files (sensel_serial_win.c) and project files (*.sln, *.vcxproj, Sensel.xcodeproj/) are not compiled or shipped."
+  - "The wrapper never calls any symbol from LibSenselDecompress."
+
+artifacts:
+  code:
+    - path: "lib/sensel-lib/src/sensel.c"
+      role: "Core LibSensel implementation: device lifecycle, frames, contacts."
+    - path: "lib/sensel-lib/src/sensel_register.c"
+      role: "Register read/write protocol over the serial transport."
+    - path: "lib/sensel-lib/src/sensel_serial_linux.c"
+      role: "Linux implementation of the serial transport (/dev/ttyACM*)."
+    - path: "lib/sensel-lib/src/*.h"
+      role: "Public and internal headers, including sensel_register_map.h used by the on-device config tool."
+    - path: "lib/sensel-lib/Makefile"
+      role: "Builds libsensel.so under lib/sensel-lib/build/release/nopressure/."
+    - path: "lib/sensel.py"
+      role: "Python ctypes wrapper; Linux-patched to load libsensel.so relative to this file and stripped of LibSenselDecompress."
+
+notes: >
+  The original sensel.py imported `from sensel_register_map import *`, referring
+  to a Python module that was generated from sensel_register_map.h but never
+  vendored. That import is removed; register constants can be re-added as a
+  generated module if and when the on-device config tool needs them.

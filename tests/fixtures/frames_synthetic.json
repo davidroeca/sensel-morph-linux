@@ -1,0 +1,30 @@
+{
+  "device": {
+    "width_mm": 230.0,
+    "height_mm": 130.0,
+    "max_contacts": 16,
+    "num_rows": 105,
+    "num_cols": 185,
+    "firmware": "synthetic"
+  },
+  "frames": [
+    {"lost_frame_count": 0, "contacts": []},
+    {"lost_frame_count": 0, "contacts": [
+      {"id": 0, "state": 1, "x": 50.0, "y": 40.0, "force": 120.0, "area": 22.5, "orientation": 0.0, "major_axis": 6.0, "minor_axis": 5.0}
+    ]},
+    {"lost_frame_count": 0, "contacts": [
+      {"id": 0, "state": 2, "x": 55.0, "y": 42.0, "force": 180.0, "area": 25.0, "orientation": 5.0, "major_axis": 6.5, "minor_axis": 5.2}
+    ]},
+    {"lost_frame_count": 0, "contacts": [
+      {"id": 0, "state": 2, "x": 60.0, "y": 45.0, "force": 210.0, "area": 26.0, "orientation": 8.0, "major_axis": 6.7, "minor_axis": 5.3},
+      {"id": 1, "state": 1, "x": 150.0, "y": 80.0, "force": 90.0, "area": 20.0, "orientation": 0.0, "major_axis": 5.8, "minor_axis": 4.9}
+    ]},
+    {"lost_frame_count": 1, "contacts": [
+      {"id": 0, "state": 3, "x": 60.5, "y": 45.5, "force": 5.0, "area": 10.0, "orientation": 0.0, "major_axis": 4.0, "minor_axis": 3.5},
+      {"id": 1, "state": 2, "x": 152.0, "y": 82.0, "force": 140.0, "area": 23.0, "orientation": 3.0, "major_axis": 6.1, "minor_axis": 5.0}
+    ]},
+    {"lost_frame_count": 0, "contacts": [
+      {"id": 1, "state": 3, "x": 152.5, "y": 82.5, "force": 2.0, "area": 8.0, "orientation": 0.0, "major_axis": 3.5, "minor_axis": 3.0}
+    ]}
+  ]
+}
