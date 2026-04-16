@@ -2,6 +2,11 @@
 
 This is a linux implementation of sensel features, breathing new linux life into the Sensel Morph, which didn't support linux through the SenselApp.
 
+## Making changes to code and files
+
+If new files are added, new features are implemented, or functionality changes, make sure
+this gets tracked in the notarai specs.
+
 ## NotarAI
 
 NotarAI is a continuous intent reconciliation tool that keeps specs, code, and docs aligned.
