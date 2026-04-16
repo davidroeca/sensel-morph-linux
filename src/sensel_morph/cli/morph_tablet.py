@@ -10,6 +10,12 @@ pen (default)
 multitouch
     Each contact is assigned an MT slot. Up to max_contacts simultaneous
     touches are reported through ABS_MT_POSITION_X/Y and ABS_MT_PRESSURE.
+
+touchpad
+    The highest-force contact drives relative cursor movement (REL_X/Y).
+    A configurable pressure threshold distinguishes "hover/move" from
+    "click" (BTN_LEFT). Optional button regions map to BTN_RIGHT /
+    BTN_MIDDLE.
 """
 
 from __future__ import annotations
@@ -30,6 +36,9 @@ from evdev.ecodes import (
     ABS_PRESSURE,
     ABS_X,
     ABS_Y,
+    BTN_LEFT,
+    BTN_MIDDLE,
+    BTN_RIGHT,
     BTN_STYLUS,
     BTN_STYLUS2,
     BTN_TOOL_FINGER,
@@ -37,7 +46,10 @@ from evdev.ecodes import (
     BTN_TOUCH,
     EV_ABS,
     EV_KEY,
+    EV_REL,
     EV_SYN,
+    REL_X,
+    REL_Y,
     SYN_REPORT,
 )
 
@@ -47,7 +59,7 @@ from sensel_morph import (
     Device,
     DeviceError,
 )
-from sensel_morph.config import Profile, load_profile
+from sensel_morph.config import Profile, TouchpadMode, load_profile
 from sensel_morph.regions import find_region
 
 _DEFAULT_PROFILE = (
@@ -56,11 +68,13 @@ _DEFAULT_PROFILE = (
 
 _UINPUT_NAME_PEN = "Sensel Morph Pen"
 _UINPUT_NAME_MT = "Sensel Morph Touch"
+_UINPUT_NAME_TOUCHPAD = "Sensel Morph Touchpad"
 
 _ABS_MAX_X = 32767
 _ABS_MAX_Y = 32767
 _ABS_MAX_PRESSURE = 65535
 _MT_MAX_SLOTS = 16
+_REL_SCALE = 10
 
 
 def _pen_absinfo_x(width_mm: float) -> AbsInfo:
@@ -118,6 +132,26 @@ def _create_mt_device(max_slots: int) -> UInput:
                     (ABS_MT_TRACKING_ID, AbsInfo(0, 0, max_slots, 0, 0, 0)),
                     (ABS_MT_TOOL_TYPE, AbsInfo(0, 0, 1, 0, 0, 0)),
                 ],
+            },
+        )
+    except UInputError:
+        sys.exit(
+            "Permission denied: cannot open /dev/uinput.\n"
+            "Install the udev rule and add your user to the input group:\n"
+            "  sudo cp udev/99-sensel.rules /etc/udev/rules.d/\n"
+            "  sudo udevadm control --reload-rules && sudo udevadm trigger\n"
+            "  sudo usermod -aG input $USER\n"
+            "Then log out and back in."
+        )
+
+
+def _create_touchpad_device() -> UInput:
+    try:
+        return UInput(
+            name=_UINPUT_NAME_TOUCHPAD,
+            events={
+                EV_KEY: [BTN_LEFT, BTN_RIGHT, BTN_MIDDLE],
+                EV_REL: [REL_X, REL_Y],
             },
         )
     except UInputError:
@@ -215,13 +249,14 @@ def _run_pen(dev: Device, profile: Profile) -> None:
                 abs_y = int(ny * _ABS_MAX_Y)
                 abs_p = int(pressure_frac * _ABS_MAX_PRESSURE)
 
+                ui.write(EV_ABS, ABS_X, abs_x)
+                ui.write(EV_ABS, ABS_Y, abs_y)
+
                 if not pen_down:
                     ui.write(EV_KEY, BTN_TOOL_PEN, 1)
                     pen_down = True
 
                 ui.write(EV_KEY, BTN_TOUCH, 1)
-                ui.write(EV_ABS, ABS_X, abs_x)
-                ui.write(EV_ABS, ABS_Y, abs_y)
                 ui.write(EV_ABS, ABS_PRESSURE, abs_p)
 
             stylus_on = any(
@@ -323,15 +358,116 @@ def _run_multitouch(dev: Device, profile: Profile) -> None:
         _cleanup()
 
 
+def _run_touchpad(dev: Device, profile: Profile) -> None:
+    tpd = profile.touchpad or TouchpadMode()
+    max_force = profile.tablet.max_force if profile.tablet else 500.0
+    speed = tpd.speed_multiplier
+    click_threshold = tpd.click_threshold
+
+    info = dev.sensor_info()
+    regions = profile.regions
+
+    ui = _create_touchpad_device()
+    prev_x: float | None = None
+    prev_y: float | None = None
+    btn_down = False
+    prev_right = False
+    prev_middle = False
+    _cleaned = False
+
+    def _cleanup() -> None:
+        nonlocal _cleaned
+        if _cleaned:
+            return
+        _cleaned = True
+        if btn_down:
+            ui.write(EV_KEY, BTN_LEFT, 0)
+        ui.write(EV_KEY, BTN_RIGHT, 0)
+        ui.write(EV_KEY, BTN_MIDDLE, 0)
+        ui.write(EV_SYN, SYN_REPORT, 0)
+        ui.close()
+
+    try:
+        for frame in dev.frames():
+            move_contact = None
+            button_contacts: list = []
+
+            for c in frame.contacts:
+                if c.state == CONTACT_END:
+                    continue
+                if move_contact is None or c.force > move_contact.force:
+                    move_contact = c
+
+            for c in frame.contacts:
+                if c.state == CONTACT_END:
+                    continue
+                if move_contact is not None and c.id == move_contact.id:
+                    continue
+                rgn = find_region(c.x, c.y, info, regions)
+                if rgn and rgn.action.get("type") == "button":
+                    button_contacts.append((c, rgn))
+
+            if move_contact is None:
+                prev_x = None
+                prev_y = None
+                if btn_down:
+                    ui.write(EV_KEY, BTN_LEFT, 0)
+                    btn_down = False
+            else:
+                if prev_x is not None and prev_y is not None:
+                    dx = move_contact.x - prev_x
+                    dy = move_contact.y - prev_y
+                    rel_x = int(dx * speed * _REL_SCALE)
+                    rel_y = int(dy * speed * _REL_SCALE)
+                    if rel_x != 0:
+                        ui.write(EV_REL, REL_X, rel_x)
+                    if rel_y != 0:
+                        ui.write(EV_REL, REL_Y, rel_y)
+
+                prev_x = move_contact.x
+                prev_y = move_contact.y
+
+                nf = min(move_contact.force / max_force, 1.0)
+                should_click = nf >= click_threshold
+
+                if should_click and not btn_down:
+                    ui.write(EV_KEY, BTN_LEFT, 1)
+                    btn_down = True
+                elif not should_click and btn_down:
+                    ui.write(EV_KEY, BTN_LEFT, 0)
+                    btn_down = False
+
+            right_on = any(
+                rgn.action.get("code") == "BTN_RIGHT"
+                for _, rgn in button_contacts
+            )
+            middle_on = any(
+                rgn.action.get("code") == "BTN_MIDDLE"
+                for _, rgn in button_contacts
+            )
+
+            if right_on != prev_right:
+                ui.write(EV_KEY, BTN_RIGHT, 1 if right_on else 0)
+                prev_right = right_on
+            if middle_on != prev_middle:
+                ui.write(EV_KEY, BTN_MIDDLE, 1 if middle_on else 0)
+                prev_middle = middle_on
+
+            ui.write(EV_SYN, SYN_REPORT, 0)
+
+    finally:
+        _cleanup()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="uinput tablet bridge for the Sensel Morph."
     )
     parser.add_argument(
         "--mode",
-        choices=["pen", "multitouch"],
-        default="pen",
-        help="tablet mode: pen (default) or multitouch",
+        choices=["pen", "multitouch", "touchpad"],
+        default=None,
+        help="tablet mode: pen (default), multitouch, or touchpad (overrides profile)",
     )
     parser.add_argument(
         "--profile",
@@ -353,8 +489,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     mode = args.mode
-    if profile.tablet and profile.tablet.mode:
-        mode = profile.tablet.mode
+    if mode is None:
+        if profile.tablet and profile.tablet.mode:
+            mode = profile.tablet.mode
+        else:
+            mode = "pen"
 
     print(f"tablet bridge: mode={mode} profile={profile.name}", file=sys.stderr)
 
@@ -368,6 +507,8 @@ def main(argv: list[str] | None = None) -> int:
             )
             if mode == "pen":
                 _run_pen(dev, profile)
+            elif mode == "touchpad":
+                _run_touchpad(dev, profile)
             else:
                 _run_multitouch(dev, profile)
     except DeviceError as e:

@@ -1,0 +1,19 @@
+name: touchpad_default
+kind: tablet
+
+tablet:
+  mode: touchpad
+  max_force: 500.0
+
+touchpad:
+  speed_multiplier: 1.0
+  click_threshold: 0.3
+
+regions:
+  - name: left_button
+    rect: { x: 0.0, y: 0.92, w: 0.12, h: 0.08 }
+    action: { type: button, code: BTN_RIGHT }
+
+  - name: right_button
+    rect: { x: 0.12, y: 0.92, w: 0.12, h: 0.08 }
+    action: { type: button, code: BTN_MIDDLE }

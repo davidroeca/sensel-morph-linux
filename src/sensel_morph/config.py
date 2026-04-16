@@ -63,12 +63,29 @@ class TabletMode:
 
 
 @dataclass(frozen=True, slots=True)
+class TouchpadMode:
+    """Touchpad-specific profile settings.
+
+    speed_multiplier scales relative cursor movement.  A value of 1.0
+    corresponds to roughly 10 device-units per millimetre of finger
+    travel, which the compositor then accelerates.
+
+    click_threshold is the fraction of max_force (0-1) that must be
+    exceeded to emit BTN_LEFT.
+    """
+
+    speed_multiplier: float = 1.0
+    click_threshold: float = 0.3
+
+
+@dataclass(frozen=True, slots=True)
 class Profile:
     """A fully loaded and validated profile."""
 
     name: str
     kind: str
     tablet: TabletMode | None = None
+    touchpad: TouchpadMode | None = None
     midi: dict | None = None
     regions: list[Region] = field(default_factory=list)
 
@@ -117,6 +134,21 @@ def load_profile(path: Path) -> Profile:
 
     midi = data.get("midi")
 
+    touchpad: TouchpadMode | None = None
+    tpd = data.get("touchpad")
+    if tpd is not None:
+        if not isinstance(tpd, dict):
+            raise ProfileError("'touchpad' section must be a mapping")
+        touchpad = TouchpadMode(
+            speed_multiplier=float(tpd.get("speed_multiplier", 1.0)),
+            click_threshold=float(tpd.get("click_threshold", 0.3)),
+        )
+
     return Profile(
-        name=name, kind=kind, tablet=tablet, midi=midi, regions=regions
+        name=name,
+        kind=kind,
+        tablet=tablet,
+        touchpad=touchpad,
+        midi=midi,
+        regions=regions,
     )
