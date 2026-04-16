@@ -8,8 +8,8 @@ YAML profile's region and force-curve definitions.
 from __future__ import annotations
 
 import argparse
-import signal
 import sys
+from contextlib import suppress
 from pathlib import Path
 
 import rtmidi
@@ -98,14 +98,8 @@ def main(argv: list[str] | None = None) -> int:
                 midi_out.send_message(list(msg))
         midi_out.close_port()
 
-    def _sigint_handler(*_: object) -> None:
-        _cleanup()
-        raise SystemExit(0)
-
-    signal.signal(signal.SIGINT, _sigint_handler)
-
     try:
-        with Device() as dev:
+        with suppress(KeyboardInterrupt), Device() as dev:
             info = dev.sensor_info()
             print(
                 f"device: {info.width_mm:.1f}x{info.height_mm:.1f} mm, "
@@ -123,6 +117,8 @@ def main(argv: list[str] | None = None) -> int:
                     messages = engine.process_contact(contact)
                     for msg in messages:
                         midi_out.send_message(list(msg))
+    except KeyboardInterrupt:
+        pass
     except DeviceError as e:
         print(f"error: {e}", file=sys.stderr)
         if "not found" in str(e).lower():
@@ -132,8 +128,6 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
         return 1
-    except SystemExit:
-        pass
     finally:
         _cleanup()
 

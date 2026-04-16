@@ -15,8 +15,8 @@ multitouch
 from __future__ import annotations
 
 import argparse
-import signal
 import sys
+from contextlib import suppress
 from pathlib import Path
 
 from evdev import AbsInfo, UInput, UInputError
@@ -155,8 +155,13 @@ def _run_pen(dev: Device, profile: Profile) -> None:
     pen_down = False
     prev_stylus = False
     prev_stylus2 = False
+    _cleaned = False
 
     def _cleanup() -> None:
+        nonlocal _cleaned
+        if _cleaned:
+            return
+        _cleaned = True
         if pen_down:
             ui.write(EV_KEY, BTN_TOOL_PEN, 0)
             ui.write(EV_KEY, BTN_TOUCH, 0)
@@ -166,12 +171,6 @@ def _run_pen(dev: Device, profile: Profile) -> None:
         ui.write(EV_KEY, BTN_STYLUS2, 0)
         ui.write(EV_SYN, SYN_REPORT, 0)
         ui.close()
-
-    def _sigint_handler(*_: object) -> None:
-        _cleanup()
-        raise SystemExit(0)
-
-    signal.signal(signal.SIGINT, _sigint_handler)
 
     try:
         for frame in dev.frames():
@@ -243,8 +242,6 @@ def _run_pen(dev: Device, profile: Profile) -> None:
 
             ui.write(EV_SYN, SYN_REPORT, 0)
 
-    except SystemExit:
-        pass
     finally:
         _cleanup()
 
@@ -257,19 +254,18 @@ def _run_multitouch(dev: Device, profile: Profile) -> None:
     contact_slots: dict[int, int] = {}
     next_slot = 0
     active_slots: dict[int, int] = {}
+    _cleaned = False
 
     def _cleanup() -> None:
+        nonlocal _cleaned
+        if _cleaned:
+            return
+        _cleaned = True
         for slot in active_slots.values():
             ui.write(EV_ABS, ABS_MT_SLOT, slot)
             ui.write(EV_ABS, ABS_MT_TRACKING_ID, -1)
         ui.write(EV_SYN, SYN_REPORT, 0)
         ui.close()
-
-    def _sigint_handler(*_: object) -> None:
-        _cleanup()
-        raise SystemExit(0)
-
-    signal.signal(signal.SIGINT, _sigint_handler)
 
     try:
         for frame in dev.frames():
@@ -323,8 +319,6 @@ def _run_multitouch(dev: Device, profile: Profile) -> None:
             ui.write(EV_KEY, BTN_TOUCH, 1 if num_active > 0 else 0)
             ui.write(EV_SYN, SYN_REPORT, 0)
 
-    except SystemExit:
-        pass
     finally:
         _cleanup()
 
@@ -365,7 +359,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"tablet bridge: mode={mode} profile={profile.name}", file=sys.stderr)
 
     try:
-        with Device() as dev:
+        with suppress(KeyboardInterrupt), Device() as dev:
             info = dev.sensor_info()
             print(
                 f"device: {info.width_mm:.1f}x{info.height_mm:.1f} mm, "

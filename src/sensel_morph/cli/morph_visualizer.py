@@ -12,6 +12,7 @@ import argparse
 import math
 import sys
 from collections import defaultdict, deque
+from contextlib import suppress
 
 import pygame
 
@@ -90,7 +91,7 @@ def main(argv: list[str] | None = None) -> int:
     pygame.init()
 
     try:
-        with Device() as dev:
+        with suppress(KeyboardInterrupt), Device() as dev:
             info = dev.sensor_info()
             win_w = int(info.width_mm * args.scale)
             win_h = int(info.height_mm * args.scale)

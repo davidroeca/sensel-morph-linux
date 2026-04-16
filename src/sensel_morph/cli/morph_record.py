@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 import time
+from contextlib import suppress
 from pathlib import Path
 
 from sensel_morph import Device, DeviceError, frame_to_dict
@@ -45,7 +46,7 @@ def main(argv: list[str] | None = None) -> int:
                 f"(Ctrl-C to stop early)",
                 file=sys.stderr,
             )
-            try:
+            with suppress(KeyboardInterrupt):
                 for frame in dev.frames():
                     if args.only_active and not frame.contacts:
                         if time.monotonic() >= deadline:
@@ -54,8 +55,7 @@ def main(argv: list[str] | None = None) -> int:
                     frames.append(frame_to_dict(frame))
                     if time.monotonic() >= deadline:
                         break
-            except KeyboardInterrupt:
-                print("stopped early", file=sys.stderr)
+                print("stopped", file=sys.stderr)
     except DeviceError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
