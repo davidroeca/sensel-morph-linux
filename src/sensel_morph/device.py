@@ -12,6 +12,7 @@ and have scanning stopped and the device closed even on exceptions.
 
 from __future__ import annotations
 
+import signal
 from collections.abc import Iterator
 from dataclasses import dataclass
 
@@ -113,6 +114,11 @@ class Device:
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
+        # Block SIGINT during cleanup so the serial stop/close
+        # sequence is not interrupted by EINTR.
+        old_mask = signal.pthread_sigmask(
+            signal.SIG_BLOCK, {signal.SIGINT}
+        )
         try:
             if self._scanning and self._handle is not None:
                 sensel.stopScanning(self._handle)
@@ -124,8 +130,11 @@ class Device:
                 sensel.close(self._handle)
                 self._handle = None
         except Exception:
-            # Never let cleanup swallow the original exception or raise on exit.
+            # Never let cleanup swallow the original exception or raise
+            # on exit.
             pass
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, old_mask)
 
     def firmware_info(self) -> FirmwareInfo:
         """Return firmware version and device identification."""
@@ -190,24 +199,44 @@ class Device:
         _check(error, "senselSoftReset")
 
     def frames(self) -> Iterator[Frame]:
-        """Yield Frame snapshots indefinitely. Starts scanning lazily."""
+        """Yield Frame snapshots indefinitely. Starts scanning lazily.
+
+        SIGINT is blocked while C library calls are in flight so that
+        ``select()``/``read()`` on the serial fd are not interrupted by
+        EINTR, which would corrupt the protocol state and leave the
+        device firmware stuck in scanning mode.  The pending signal is
+        checked between frames; when detected the generator returns and
+        the signal mask is restored, allowing Python to deliver the
+        KeyboardInterrupt for normal cleanup.
+        """
         assert self._handle is not None and self._frame is not None
         if not self._scanning:
             _check(sensel.startScanning(self._handle), "senselStartScanning")
             self._scanning = True
-        while True:
-            _check(sensel.readSensor(self._handle), "senselReadSensor")
-            error, n = sensel.getNumAvailableFrames(self._handle)
-            _check(error, "senselGetNumAvailableFrames")
-            for _ in range(n):
+        old_mask = signal.pthread_sigmask(
+            signal.SIG_BLOCK, {signal.SIGINT}
+        )
+        try:
+            while True:
+                if signal.SIGINT in signal.sigpending():
+                    return
                 _check(
-                    sensel.getFrame(self._handle, self._frame), "senselGetFrame"
+                    sensel.readSensor(self._handle), "senselReadSensor"
                 )
-                contacts = tuple(
-                    contact_from_struct(self._frame.contacts[i])
-                    for i in range(int(self._frame.n_contacts))
-                )
-                yield Frame(
-                    lost_frame_count=int(self._frame.lost_frame_count),
-                    contacts=contacts,
-                )
+                error, n = sensel.getNumAvailableFrames(self._handle)
+                _check(error, "senselGetNumAvailableFrames")
+                for _ in range(n):
+                    _check(
+                        sensel.getFrame(self._handle, self._frame),
+                        "senselGetFrame",
+                    )
+                    contacts = tuple(
+                        contact_from_struct(self._frame.contacts[i])
+                        for i in range(int(self._frame.n_contacts))
+                    )
+                    yield Frame(
+                        lost_frame_count=int(self._frame.lost_frame_count),
+                        contacts=contacts,
+                    )
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, old_mask)
