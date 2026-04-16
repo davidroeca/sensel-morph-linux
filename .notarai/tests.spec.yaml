@@ -35,6 +35,8 @@ artifacts:
       role: "Frame/Contact parsing tests against recorded JSON fixtures."
     - path: "tests/test_midi.py"
       role: "MIDI mapping engine tests: note/CC/aftertouch lifecycle, profile loading, multi-contact."
+    - path: "tests/test_registers.py"
+      role: "Register encoding/decoding, DeviceConfig serialization, YAML round-trip, and mocked Device register methods."
   data:
     - path: "tests/fixtures/*"
       role: "Recorded frame data used by pure-Python tests."

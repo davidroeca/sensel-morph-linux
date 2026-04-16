@@ -22,6 +22,12 @@ behaviors:
     then: "regions.hit(contact) returns the first matching region or None, stable across frames for a given contact id."
     tested_by:
       - path: "tests/test_regions.py"
+  - name: device_register_access
+    given: "an open Device and a register definition"
+    then: "Device.read_reg decodes the register value; Device.write_reg encodes and writes; read-only registers raise DeviceError on write."
+    tested_by:
+      - path: "tests/test_registers.py"
+        assertion: "TestDeviceRegMethods covers read, write, read-only guard, read_config, and write_config."
   - name: config_loading_validates
     given: "a YAML profile on disk"
     then: "config.load(path) returns a validated profile object or raises a clear error naming the offending key."
@@ -65,5 +71,9 @@ artifacts:
       role: "Console script entry point for morph-tablet."
     - path: "src/sensel_morph/cli/morph_midi.py"
       role: "Console script entry point for morph-midi."
+    - path: "src/sensel_morph/cli/morph_config.py"
+      role: "Console script entry point for morph-config (dump/load/reset)."
+    - path: "src/sensel_morph/registers.py"
+      role: "Register definitions (address, size, encode/decode) and DeviceConfig dataclass for on-device configuration."
     - path: "src/sensel_morph/midi.py"
       role: "MIDI mapping engine: contact-to-MIDI translation, note/CC/aftertouch, stateful tracking."

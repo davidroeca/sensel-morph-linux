@@ -17,6 +17,11 @@ from typing import Iterator
 
 from ._libsensel import sensel
 from .frames import Frame, contact_from_struct
+from .registers import (
+    CONFIG_FIELDS,
+    DeviceConfig,
+    RegDef,
+)
 
 
 class DeviceError(RuntimeError):
@@ -145,6 +150,44 @@ class Device:
             width_mm=float(info.width),
             height_mm=float(info.height),
         )
+
+    def read_reg(self, reg: RegDef) -> int:
+        """Read a single register and return its decoded integer value."""
+        assert self._handle is not None, "device not open"
+        error, buf = sensel.readReg(self._handle, reg.addr, reg.size)
+        _check(error, f"senselReadReg(0x{reg.addr:02x})")
+        return reg.decode(buf)
+
+    def write_reg(self, reg: RegDef, value: int) -> None:
+        """Write a single register with an encoded integer value."""
+        assert self._handle is not None, "device not open"
+        if not reg.writable:
+            raise DeviceError(
+                f"register 0x{reg.addr:02x} is read-only"
+            )
+        data = reg.encode(value)
+        error = sensel.writeReg(
+            self._handle, reg.addr, reg.size, data
+        )
+        _check(error, f"senselWriteReg(0x{reg.addr:02x})")
+
+    def read_config(self) -> DeviceConfig:
+        """Read all configurable registers into a DeviceConfig."""
+        values: dict[str, int] = {}
+        for name, reg in CONFIG_FIELDS.items():
+            values[name] = self.read_reg(reg)
+        return DeviceConfig(**values)
+
+    def write_config(self, cfg: DeviceConfig) -> None:
+        """Write a DeviceConfig to the device registers."""
+        for name, reg in CONFIG_FIELDS.items():
+            self.write_reg(reg, getattr(cfg, name))
+
+    def soft_reset(self) -> None:
+        """Issue a soft reset to the device."""
+        assert self._handle is not None, "device not open"
+        error = sensel.softReset(self._handle)
+        _check(error, "senselSoftReset")
 
     def frames(self) -> Iterator[Frame]:
         """Yield Frame snapshots indefinitely. Starts scanning lazily."""

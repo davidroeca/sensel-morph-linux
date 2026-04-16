@@ -13,6 +13,7 @@ from .frames import (
     frame_to_dict,
 )
 from .regions import Rect, Region, find_region, regions_from_yaml
+from .registers import DeviceConfig, config_from_dict, config_to_dict
 
 __all__ = [
     "Device",
@@ -37,4 +38,7 @@ __all__ = [
     "Region",
     "find_region",
     "regions_from_yaml",
+    "DeviceConfig",
+    "config_from_dict",
+    "config_to_dict",
 ]
