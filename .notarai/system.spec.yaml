@@ -42,6 +42,9 @@ subsystems:
   - $ref: "./profiles.spec.yaml"
   - $ref: "./tests.spec.yaml"
 
+applies:
+  - $ref: "./quality.spec.yaml"
+
 exclude:
   - "lib/sensel-lib/build/**"
   - "lib/sensel-lib/**/*.o"

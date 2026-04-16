@@ -19,29 +19,34 @@ import signal
 import sys
 from pathlib import Path
 
-from evdev import AbsInfo, UInput, ecodes
+from evdev import AbsInfo, UInput
 from evdev.ecodes import (
-    ABS_PRESSURE,
-    ABS_X,
-    ABS_Y,
     ABS_MT_POSITION_X,
     ABS_MT_POSITION_Y,
     ABS_MT_PRESSURE,
     ABS_MT_SLOT,
-    ABS_MT_TRACKING_ID,
     ABS_MT_TOOL_TYPE,
+    ABS_MT_TRACKING_ID,
+    ABS_PRESSURE,
+    ABS_X,
+    ABS_Y,
     BTN_STYLUS,
     BTN_STYLUS2,
+    BTN_TOOL_FINGER,
     BTN_TOOL_PEN,
     BTN_TOUCH,
-    BTN_TOOL_FINGER,
     EV_ABS,
     EV_KEY,
-    SYN_DROPPED,
+    EV_SYN,
     SYN_REPORT,
 )
 
-from sensel_morph import CONTACT_END, CONTACT_MOVE, CONTACT_START, Device, DeviceError
+from sensel_morph import (
+    CONTACT_END,
+    CONTACT_START,
+    Device,
+    DeviceError,
+)
 from sensel_morph.config import Profile, load_profile
 from sensel_morph.regions import find_region
 
@@ -67,13 +72,15 @@ def _pen_absinfo_y(height_mm: float) -> AbsInfo:
 
 
 def _pen_absinfo_pressure() -> AbsInfo:
-    return AbsInfo(value=0, min=0, max=_ABS_MAX_PRESSURE, fuzz=0, flat=0, resolution=0)
+    return AbsInfo(
+        value=0, min=0, max=_ABS_MAX_PRESSURE, fuzz=0, flat=0, resolution=0
+    )
 
 
 def _create_pen_device() -> UInput:
     return UInput(
         name=_UINPUT_NAME_PEN,
-        events={
+        events={  # ty: ignore[invalid-argument-type]
             EV_KEY: [BTN_TOOL_PEN, BTN_TOUCH, BTN_STYLUS, BTN_STYLUS2],
             EV_ABS: [
                 (ABS_X, AbsInfo(0, 0, _ABS_MAX_X, 0, 0, 0)),
@@ -87,7 +94,7 @@ def _create_pen_device() -> UInput:
 def _create_mt_device(max_slots: int) -> UInput:
     return UInput(
         name=_UINPUT_NAME_MT,
-        events={
+        events={  # ty: ignore[invalid-argument-type]
             EV_KEY: [BTN_TOUCH, BTN_TOOL_FINGER],
             EV_ABS: [
                 (ABS_MT_POSITION_X, AbsInfo(0, 0, _ABS_MAX_X, 0, 0, 0)),
@@ -171,8 +178,14 @@ def _run_pen(dev: Device, profile: Profile) -> None:
                     ui.write(EV_SYN, SYN_REPORT, 0)
                     pen_down = False
             else:
-                nx = max(0.0, min((pen_contact.x - x_lo_mm) / (x_hi_mm - x_lo_mm), 1.0))
-                ny = max(0.0, min((pen_contact.y - y_lo_mm) / (y_hi_mm - y_lo_mm), 1.0))
+                nx = max(
+                    0.0,
+                    min((pen_contact.x - x_lo_mm) / (x_hi_mm - x_lo_mm), 1.0),
+                )
+                ny = max(
+                    0.0,
+                    min((pen_contact.y - y_lo_mm) / (y_hi_mm - y_lo_mm), 1.0),
+                )
                 nf = max(0.0, min(pen_contact.force / max_force, 1.0))
                 pressure_frac = curve.apply(nf)
 
@@ -190,10 +203,12 @@ def _run_pen(dev: Device, profile: Profile) -> None:
                 ui.write(EV_ABS, ABS_PRESSURE, abs_p)
 
             stylus_on = any(
-                rgn.action.get("code") == "BTN_STYLUS" for _, rgn in button_contacts
+                rgn.action.get("code") == "BTN_STYLUS"
+                for _, rgn in button_contacts
             )
             stylus2_on = any(
-                rgn.action.get("code") == "BTN_STYLUS2" for _, rgn in button_contacts
+                rgn.action.get("code") == "BTN_STYLUS2"
+                for _, rgn in button_contacts
             )
 
             if stylus_on != prev_stylus:
@@ -221,7 +236,7 @@ def _run_multitouch(dev: Device, profile: Profile) -> None:
     active_slots: dict[int, int] = {}
 
     def _cleanup() -> None:
-        for cid, slot in active_slots.items():
+        for slot in active_slots.values():
             ui.write(EV_ABS, ABS_MT_SLOT, slot)
             ui.write(EV_ABS, ABS_MT_TRACKING_ID, -1)
         ui.write(EV_SYN, SYN_REPORT, 0)
@@ -279,7 +294,9 @@ def _run_multitouch(dev: Device, profile: Profile) -> None:
                 ui.write(EV_ABS, ABS_MT_SLOT, slot)
                 ui.write(EV_ABS, ABS_MT_TRACKING_ID, -1)
 
-            num_active = sum(1 for c in frame.contacts if c.state != CONTACT_END)
+            num_active = sum(
+                1 for c in frame.contacts if c.state != CONTACT_END
+            )
             ui.write(EV_KEY, BTN_TOUCH, 1 if num_active > 0 else 0)
             ui.write(EV_SYN, SYN_REPORT, 0)
 

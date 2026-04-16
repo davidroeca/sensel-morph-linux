@@ -1,6 +1,13 @@
-"""sensel_morph: typed Python layer over the vendored LibSensel ctypes wrapper."""
+"""sensel_morph: typed Python layer over the vendored LibSensel ctypes
+wrapper."""
 
-from .config import Profile, ProfileError, PressureCurve, TabletMode, load_profile
+from .config import (
+    PressureCurve,
+    Profile,
+    ProfileError,
+    TabletMode,
+    load_profile,
+)
 from .device import Device, DeviceError, DeviceIdent, SensorInfo, list_devices
 from .frames import (
     CONTACT_END,
@@ -16,29 +23,29 @@ from .regions import Rect, Region, find_region, regions_from_yaml
 from .registers import DeviceConfig, config_from_dict, config_to_dict
 
 __all__ = [
+    "CONTACT_END",
+    "CONTACT_INVALID",
+    "CONTACT_MOVE",
+    "CONTACT_START",
+    "Contact",
     "Device",
+    "DeviceConfig",
     "DeviceError",
     "DeviceIdent",
-    "SensorInfo",
-    "list_devices",
-    "Contact",
     "Frame",
-    "frame_to_dict",
-    "frame_from_dict",
-    "CONTACT_INVALID",
-    "CONTACT_START",
-    "CONTACT_MOVE",
-    "CONTACT_END",
+    "PressureCurve",
     "Profile",
     "ProfileError",
-    "PressureCurve",
-    "TabletMode",
-    "load_profile",
     "Rect",
     "Region",
-    "find_region",
-    "regions_from_yaml",
-    "DeviceConfig",
+    "SensorInfo",
+    "TabletMode",
     "config_from_dict",
     "config_to_dict",
+    "find_region",
+    "frame_from_dict",
+    "frame_to_dict",
+    "list_devices",
+    "load_profile",
+    "regions_from_yaml",
 ]

@@ -2,7 +2,7 @@
 name = "sensel-morph-linux"
 version = "0.1.0"
 description = "Linux-native toolchain for the Sensel Morph: tablet and MIDI bridges built on the vendored MIT LibSensel C source."
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 readme = "README.md"
 license = { text = "MIT" }
 dependencies = [
@@ -37,4 +37,14 @@ addopts = "-ra"
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
+    "ruff>=0.15.10",
+    "ty>=0.0.31",
 ]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 80
+exclude = ["lib/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "PERF", "RUF"]

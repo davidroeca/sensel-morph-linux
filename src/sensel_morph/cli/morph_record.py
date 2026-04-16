@@ -16,15 +16,20 @@ def main(argv: list[str] | None = None) -> int:
         description="Record frames from a connected Sensel Morph to JSON."
     )
     parser.add_argument(
-        "--duration", type=float, default=5.0,
+        "--duration",
+        type=float,
+        default=5.0,
         help="seconds of data to capture (default: 5.0)",
     )
     parser.add_argument(
-        "--output", type=Path, required=True,
+        "--output",
+        type=Path,
+        required=True,
         help="path to write the JSON fixture",
     )
     parser.add_argument(
-        "--only-active", action="store_true",
+        "--only-active",
+        action="store_true",
         help="only record frames with at least one contact",
     )
     args = parser.parse_args(argv)
@@ -36,7 +41,8 @@ def main(argv: list[str] | None = None) -> int:
             fw = dev.firmware_info()
             deadline = time.monotonic() + args.duration
             print(
-                f"recording up to {args.duration:.1f}s... (Ctrl-C to stop early)",
+                f"recording up to {args.duration:.1f}s... "
+                f"(Ctrl-C to stop early)",
                 file=sys.stderr,
             )
             try:

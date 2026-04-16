@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 CONTACT_INVALID = 0
 CONTACT_START = 1
 CONTACT_MOVE = 2
@@ -42,7 +41,7 @@ class Frame:
     contacts: tuple[Contact, ...]
 
 
-def frame_to_dict(frame: "Frame") -> dict:
+def frame_to_dict(frame: Frame) -> dict:
     """Serialize a Frame to a JSON-compatible dict."""
     return {
         "lost_frame_count": frame.lost_frame_count,
@@ -63,7 +62,7 @@ def frame_to_dict(frame: "Frame") -> dict:
     }
 
 
-def frame_from_dict(d: dict) -> "Frame":
+def frame_from_dict(d: dict) -> Frame:
     """Deserialize a Frame from a JSON-compatible dict."""
     contacts = tuple(
         Contact(

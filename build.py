@@ -41,7 +41,9 @@ def main() -> int:
     try:
         subprocess.run(["make"], cwd=C_DIR, check=True)
     except subprocess.CalledProcessError as exc:
-        sys.stderr.write(f"error: `make` failed with exit code {exc.returncode}\n")
+        sys.stderr.write(
+            f"error: `make` failed with exit code {exc.returncode}\n"
+        )
         return exc.returncode
 
     if not BUILD_ARTIFACT.is_file():

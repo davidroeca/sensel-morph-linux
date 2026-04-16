@@ -12,8 +12,8 @@ and have scanning stopped and the device closed even on exceptions.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Iterator
 
 from ._libsensel import sensel
 from .frames import Frame, contact_from_struct
@@ -77,7 +77,9 @@ def list_devices() -> list[DeviceIdent]:
     out: list[DeviceIdent] = []
     for i in range(int(dl.num_devices)):
         d = dl.devices[i]
-        serial = bytes(d.serial_num).split(b"\x00", 1)[0].decode("utf-8", "replace")
+        serial = (
+            bytes(d.serial_num).split(b"\x00", 1)[0].decode("utf-8", "replace")
+        )
         com = bytes(d.com_port).split(b"\x00", 1)[0].decode("utf-8", "replace")
         out.append(DeviceIdent(index=int(d.idx), serial=serial, com_port=com))
     return out
@@ -92,7 +94,7 @@ class Device:
         self._frame = None
         self._scanning = False
 
-    def __enter__(self) -> "Device":
+    def __enter__(self) -> Device:
         if self._index is None:
             devs = list_devices()
             if not devs:
@@ -104,7 +106,9 @@ class Device:
         error, frame = sensel.allocateFrameData(self._handle)
         _check(error, "senselAllocateFrameData")
         self._frame = frame
-        error = sensel.setFrameContent(self._handle, sensel.FRAME_CONTENT_CONTACTS_MASK)
+        error = sensel.setFrameContent(
+            self._handle, sensel.FRAME_CONTENT_CONTACTS_MASK
+        )
         _check(error, "senselSetFrameContent")
         return self
 
@@ -162,13 +166,9 @@ class Device:
         """Write a single register with an encoded integer value."""
         assert self._handle is not None, "device not open"
         if not reg.writable:
-            raise DeviceError(
-                f"register 0x{reg.addr:02x} is read-only"
-            )
+            raise DeviceError(f"register 0x{reg.addr:02x} is read-only")
         data = reg.encode(value)
-        error = sensel.writeReg(
-            self._handle, reg.addr, reg.size, data
-        )
+        error = sensel.writeReg(self._handle, reg.addr, reg.size, data)
         _check(error, f"senselWriteReg(0x{reg.addr:02x})")
 
     def read_config(self) -> DeviceConfig:
@@ -200,7 +200,9 @@ class Device:
             error, n = sensel.getNumAvailableFrames(self._handle)
             _check(error, "senselGetNumAvailableFrames")
             for _ in range(n):
-                _check(sensel.getFrame(self._handle, self._frame), "senselGetFrame")
+                _check(
+                    sensel.getFrame(self._handle, self._frame), "senselGetFrame"
+                )
                 contacts = tuple(
                     contact_from_struct(self._frame.contacts[i])
                     for i in range(int(self._frame.n_contacts))

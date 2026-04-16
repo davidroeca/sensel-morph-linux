@@ -15,7 +15,6 @@ from .config import PressureCurve
 from .frames import CONTACT_END, CONTACT_MOVE, CONTACT_START, Contact
 from .regions import Region
 
-
 NOTE_ON = 0x90
 NOTE_OFF = 0x80
 POLY_AFTERTOUCH = 0xA0
@@ -143,9 +142,7 @@ class MidiEngine:
                     contact.force, cfg.max_force, cfg.velocity_curve
                 )
                 vel = max(vel, 1)
-                messages.append(
-                    (NOTE_ON | mapping.channel, mapping.note, vel)
-                )
+                messages.append((NOTE_ON | mapping.channel, mapping.note, vel))
                 self._active[contact.id] = ActiveNote(
                     channel=mapping.channel,
                     note=mapping.note,
@@ -190,18 +187,15 @@ class MidiEngine:
         elif contact.state == CONTACT_END:
             active = self._active.pop(contact.id, None)
             if active is not None:
-                messages.append(
-                    (NOTE_OFF | active.channel, active.note, 0)
-                )
+                messages.append((NOTE_OFF | active.channel, active.note, 0))
 
         return messages
 
-    def all_notes_off(self) -> list[tuple[int, ...]]:
+    def all_notes_off(self) -> list[tuple[int, int, int]]:
         """Generate NOTE_OFF for all currently active notes."""
-        messages: list[tuple[int, ...]] = []
-        for active in self._active.values():
-            messages.append(
-                (NOTE_OFF | active.channel, active.note, 0)
-            )
+        messages = [
+            (NOTE_OFF | active.channel, active.note, 0)
+            for active in self._active.values()
+        ]
         self._active.clear()
         return messages

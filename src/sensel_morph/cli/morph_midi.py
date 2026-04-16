@@ -14,10 +14,9 @@ from pathlib import Path
 
 import rtmidi
 
-from sensel_morph import CONTACT_END, Device, DeviceError
+from sensel_morph import Device, DeviceError
 from sensel_morph.config import PressureCurve, load_profile
 from sensel_morph.midi import MidiConfig, MidiEngine
-
 
 _DEFAULT_PROFILE = (
     Path(__file__).resolve().parents[3] / "profiles" / "midi_drumpads.yaml"
@@ -56,7 +55,9 @@ def main(argv: list[str] | None = None) -> int:
         "--profile",
         type=Path,
         default=_DEFAULT_PROFILE,
-        help="path to a MIDI YAML profile (default: profiles/midi_drumpads.yaml)",
+        help=(
+            "path to a MIDI YAML profile (default: profiles/midi_drumpads.yaml)"
+        ),
     )
     parser.add_argument(
         "--port-name",
@@ -81,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
 
-    midi_out = rtmidi.MidiOut()
+    midi_out = rtmidi.MidiOut()  # ty: ignore[unresolved-attribute]
     midi_out.open_virtual_port(args.port_name)
     print(
         f"midi bridge: port='{args.port_name}' profile={profile.name}",

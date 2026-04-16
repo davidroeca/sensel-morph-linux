@@ -15,6 +15,6 @@ _LIB_DIR = Path(__file__).resolve().parents[2] / "lib"
 if str(_LIB_DIR) not in sys.path:
     sys.path.insert(0, str(_LIB_DIR))
 
-import sensel  # noqa: E402  (sys.path mutation above)
+import sensel  # noqa: E402  (sys.path mutation above)  # ty: ignore[unresolved-import]
 
 __all__ = ["sensel"]

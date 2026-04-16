@@ -82,7 +82,9 @@ def load_profile(path: Path) -> Profile:
     text = path.read_text()
     data = yaml.safe_load(text)
     if not isinstance(data, dict):
-        raise ProfileError(f"profile must be a YAML mapping, got {type(data).__name__}")
+        raise ProfileError(
+            f"profile must be a YAML mapping, got {type(data).__name__}"
+        )
 
     name = data.get("name", path.stem)
     kind = data.get("kind", "")
@@ -100,7 +102,12 @@ def load_profile(path: Path) -> Profile:
                 raise ProfileError(
                     "'active_surface' must be a list of 4 floats [x, y, w, h]"
                 )
-            as_ = tuple(float(v) for v in as_)
+            as_ = (
+                float(as_[0]),
+                float(as_[1]),
+                float(as_[2]),
+                float(as_[3]),
+            )
         tablet = TabletMode(
             mode=td.get("mode", "pen"),
             pressure_curve=pc,
@@ -110,4 +117,6 @@ def load_profile(path: Path) -> Profile:
 
     midi = data.get("midi")
 
-    return Profile(name=name, kind=kind, tablet=tablet, midi=midi, regions=regions)
+    return Profile(
+        name=name, kind=kind, tablet=tablet, midi=midi, regions=regions
+    )

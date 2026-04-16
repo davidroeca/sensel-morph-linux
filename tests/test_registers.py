@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -13,11 +12,11 @@ from sensel_morph.registers import (
     CONFIG_FIELDS,
     CONTACTS_MIN_FORCE,
     DEVICE_ID,
-    DeviceConfig,
     LED_BRIGHTNESS,
-    RegDef,
     SCAN_FRAME_RATE,
     SENSOR_ACTIVE_AREA_WIDTH_UM,
+    DeviceConfig,
+    RegDef,
     config_from_dict,
     config_to_dict,
 )
@@ -267,9 +266,8 @@ class TestDeviceRegMethods:
 
         from sensel_morph.device import Device, DeviceError
 
-        with Device() as dev:
-            with pytest.raises(DeviceError, match="read-only"):
-                dev.write_reg(DEVICE_ID, 0x1234)
+        with Device() as dev, pytest.raises(DeviceError, match="read-only"):
+            dev.write_reg(DEVICE_ID, 0x1234)
 
     @patch("sensel_morph.device.sensel")
     def test_read_config_returns_device_config(
@@ -297,9 +295,7 @@ class TestDeviceRegMethods:
         assert cfg.scan_frame_rate == 0
 
     @patch("sensel_morph.device.sensel")
-    def test_write_config_calls_write_reg(
-        self, mock_sensel: MagicMock
-    ) -> None:
+    def test_write_config_calls_write_reg(self, mock_sensel: MagicMock) -> None:
         m = self._mock_device()
         mock_sensel.getDeviceList = m.getDeviceList
         mock_sensel.openDeviceByID = m.openDeviceByID

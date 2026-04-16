@@ -11,13 +11,18 @@ import sys
 import time
 from typing import NoReturn
 
-from sensel_morph import CONTACT_END, CONTACT_MOVE, CONTACT_START, Device, DeviceError
-
+from sensel_morph import (
+    CONTACT_END,
+    CONTACT_MOVE,
+    CONTACT_START,
+    Device,
+    DeviceError,
+)
 
 _STATE_LABELS = {
     CONTACT_START: "START",
-    CONTACT_MOVE:  "MOVE ",
-    CONTACT_END:   "END  ",
+    CONTACT_MOVE: "MOVE ",
+    CONTACT_END: "END  ",
 }
 
 _CLEAR_SCREEN = "\x1b[2J"
@@ -54,9 +59,11 @@ def main() -> int:
 
                 buf = [_CURSOR_HOME]
                 buf.append(
-                    f"Sensel Morph -- {info.width_mm:.1f}x{info.height_mm:.1f} mm, "
+                    f"Sensel Morph -- "
+                    f"{info.width_mm:.1f}x{info.height_mm:.1f} mm, "
                     f"max {info.max_contacts} contacts  "
-                    f"(frame {frame_count}, lost {frame.lost_frame_count})\x1b[K\n"
+                    f"(frame {frame_count}, "
+                    f"lost {frame.lost_frame_count})\x1b[K\n"
                 )
                 buf.append("-" * 72 + "\x1b[K\n")
                 buf.append(

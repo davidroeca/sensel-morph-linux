@@ -21,7 +21,6 @@ from sensel_morph import (
     frame_to_dict,
 )
 
-
 FIXTURE = Path(__file__).parent / "fixtures" / "frames_synthetic.json"
 
 
@@ -31,7 +30,9 @@ def fixture_frames() -> list[Frame]:
     return [frame_from_dict(f) for f in payload["frames"]]
 
 
-def test_fixture_loads_expected_frame_count(fixture_frames: list[Frame]) -> None:
+def test_fixture_loads_expected_frame_count(
+    fixture_frames: list[Frame],
+) -> None:
     assert len(fixture_frames) == 6
 
 
@@ -45,7 +46,14 @@ def test_contact_lifecycle_states(fixture_frames: list[Frame]) -> None:
         next((c.state for c in f.contacts if c.id == 0), None)
         for f in fixture_frames
     ]
-    assert id0_states == [None, CONTACT_START, CONTACT_MOVE, CONTACT_MOVE, CONTACT_END, None]
+    assert id0_states == [
+        None,
+        CONTACT_START,
+        CONTACT_MOVE,
+        CONTACT_MOVE,
+        CONTACT_END,
+        None,
+    ]
 
 
 def test_contact_force_is_float(fixture_frames: list[Frame]) -> None:
@@ -58,7 +66,7 @@ def test_contact_force_is_float(fixture_frames: list[Frame]) -> None:
 def test_frame_is_immutable(fixture_frames: list[Frame]) -> None:
     frame = fixture_frames[2]
     with pytest.raises((AttributeError, TypeError)):
-        frame.contacts = ()  # type: ignore[misc]
+        frame.contacts = ()  # ty: ignore[invalid-assignment]
     if frame.contacts:
         c = frame.contacts[0]
         with pytest.raises((AttributeError, TypeError)):

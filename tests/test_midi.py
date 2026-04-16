@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from sensel_morph.config import PressureCurve, load_profile
 from sensel_morph.frames import Contact
 from sensel_morph.midi import (
@@ -52,7 +50,13 @@ def _make_contact(
 
 
 def _note_region(
-    name: str, x: float, y: float, w: float, h: float, note: int, channel: int = 0
+    name: str,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    note: int,
+    channel: int = 0,
 ) -> Region:
     return Region(
         name=name,
@@ -86,7 +90,9 @@ class TestParseMapping:
         assert mapping.cc == 1
 
     def test_unknown_action_returns_none(self) -> None:
-        rgn = Region(name="btn", rect=Rect(0, 0, 0.1, 0.1), action={"type": "button"})
+        rgn = Region(
+            name="btn", rect=Rect(0, 0, 0.1, 0.1), action={"type": "button"}
+        )
         assert parse_mapping(rgn) is None
 
     def test_no_action_returns_none(self) -> None:
@@ -231,7 +237,11 @@ class TestMidiEngine:
 
 class TestProfileLoading:
     def test_loads_drumpads_profile(self) -> None:
-        path = Path(__file__).resolve().parents[1] / "profiles" / "midi_drumpads.yaml"
+        path = (
+            Path(__file__).resolve().parents[1]
+            / "profiles"
+            / "midi_drumpads.yaml"
+        )
         profile = load_profile(path)
         assert profile.name == "midi_drumpads"
         assert profile.kind == "midi"
@@ -239,7 +249,11 @@ class TestProfileLoading:
         assert profile.midi is not None
 
     def test_loads_keyboard_profile(self) -> None:
-        path = Path(__file__).resolve().parents[1] / "profiles" / "midi_keyboard.yaml"
+        path = (
+            Path(__file__).resolve().parents[1]
+            / "profiles"
+            / "midi_keyboard.yaml"
+        )
         profile = load_profile(path)
         assert profile.name == "midi_keyboard"
         assert profile.kind == "midi"
@@ -249,7 +263,11 @@ class TestProfileLoading:
 
     def test_drumpads_regions_cover_surface(self) -> None:
         """All 16 pads tile the surface with no gaps or overlaps."""
-        path = Path(__file__).resolve().parents[1] / "profiles" / "midi_drumpads.yaml"
+        path = (
+            Path(__file__).resolve().parents[1]
+            / "profiles"
+            / "midi_drumpads.yaml"
+        )
         profile = load_profile(path)
         for rgn in profile.regions:
             r = rgn.rect

@@ -1,0 +1,32 @@
+schema_version: "0.8"
+domain: software
+cross_cutting: true
+
+intent: >
+  Code quality enforcement via ruff (autoformatting + linting) and ty
+  (type checking). All Python source is formatted consistently and checked
+  for common errors before merge. These tools are dev-only dependencies
+  managed through uv; they are not required at runtime.
+
+behaviors:
+  - name: ruff_format_is_consistent
+    given: "any Python file in the governed set (excluding lib/)"
+    then: "`uv run ruff format --check .` reports zero differences; the sole formatter is ruff."
+  - name: ruff_lint_passes
+    given: "any Python file in the governed set (excluding lib/)"
+    then: "`uv run ruff check .` reports zero violations under the selected rule set (E, F, W, I, UP, B, SIM, PERF, RUF)."
+  - name: ty_type_check_passes
+    given: "all governed Python source, tests, and build.py"
+    then: "`uv run ty check src/ tests/ build.py` reports zero errors, allowing intentional `# ty: ignore[...]` suppressions for missing third-party stubs (evdev, rtmidi) and vendored imports (lib/sensel.py)."
+
+constraints:
+  - "ruff is the sole formatter; no other formatters are configured."
+  - "ruff lint selects E, F, W, I, UP, B, SIM, PERF, RUF rules; docstrings (D), complexity limits (PLR), security (S), boolean traps (FBT), pathlib (PTH), and annotations (ANN) are intentionally excluded."
+  - "lib/ is excluded from ruff because it contains vendored/patched code that should not be reformatted."
+  - "ty is the type checker; unresolved references from missing third-party stubs are suppressed with inline `# ty: ignore[...]` comments, not per-file ignores."
+  - "ruff and ty are dev dependencies managed through uv and declared in pyproject.toml; they are not installed at runtime."
+
+invariants:
+  - "`uv run ruff format --check .` passes on all governed Python files."
+  - "`uv run ruff check .` passes on all governed Python files."
+  - "`uv run ty check src/ tests/ build.py` passes (allowing intentional ty: ignore suppressions)."

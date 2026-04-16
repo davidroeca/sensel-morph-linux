@@ -27,6 +27,9 @@ constraints:
   - "No test imports lib.sensel at module import time unless it is clearly a hardware test (skipped by default)."
   - "Fixtures live under tests/fixtures/ and are checked into the repo."
 
+applies:
+  - $ref: "./quality.spec.yaml"
+
 artifacts:
   tests:
     - path: "tests/test_regions.py"

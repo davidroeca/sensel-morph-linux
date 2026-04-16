@@ -25,7 +25,7 @@ def _open_or_exit() -> Device:
         devices = list_devices()
     except DeviceError as e:
         print(f"error: {e}", file=sys.stderr)
-        raise SystemExit(1)
+        raise SystemExit(1) from None
 
     if not devices:
         print(
@@ -56,9 +56,7 @@ def _cmd_dump(args: argparse.Namespace) -> int:
         "config": config_to_dict(cfg),
     }
 
-    text = yaml.safe_dump(
-        output, default_flow_style=False, sort_keys=False
-    )
+    text = yaml.safe_dump(output, default_flow_style=False, sort_keys=False)
 
     if args.output is None:
         sys.stdout.write(text)

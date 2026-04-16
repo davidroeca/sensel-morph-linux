@@ -8,7 +8,7 @@ device configuration as structured data.
 from __future__ import annotations
 
 import struct
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, fields
 from typing import Any
 
 

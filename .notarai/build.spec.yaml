@@ -17,9 +17,13 @@ behaviors:
   - name: declared_runtime_dependencies
     given: "a user runs `uv sync`"
     then: "python-rtmidi, pygame, evdev, pyserial, numpy, pyyaml, and pytest (dev) are installed into .venv/."
+  - name: declared_dev_dependencies
+    given: "a user runs `uv sync --group dev`"
+    then: "ruff (formatter + linter) and ty (type checker) are installed into .venv/ as dev-only tools."
 
 constraints:
-  - "pyproject.toml targets Python >= 3.11 and declares the project name `sensel-morph-linux`."
+  - "pyproject.toml targets Python >= 3.12 and declares the project name `sensel-morph-linux`."
+  - "ruff (>= 0.15.10) and ty (>= 0.0.31) are declared as dev dependencies in pyproject.toml and are not required at runtime."
   - "The built libsensel.so is gitignored; only C source is checked in."
   - "build.py is idempotent: re-running it after a successful build is a fast no-op or trivial rebuild."
 

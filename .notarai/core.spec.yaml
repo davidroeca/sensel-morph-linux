@@ -43,6 +43,9 @@ constraints:
 invariants:
   - "Frame dataclasses are immutable snapshots; mutating a yielded frame must not affect subsequent frames."
 
+applies:
+  - $ref: "./quality.spec.yaml"
+
 artifacts:
   code:
     - path: "src/sensel_morph/__init__.py"

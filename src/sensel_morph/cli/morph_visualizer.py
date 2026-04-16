@@ -15,7 +15,11 @@ from collections import defaultdict, deque
 
 import pygame
 
-from sensel_morph import CONTACT_END, CONTACT_MOVE, CONTACT_START, Device, DeviceError
+from sensel_morph import (
+    CONTACT_END,
+    Device,
+    DeviceError,
+)
 
 _DEFAULT_SCALE = 4
 _TRAIL_LENGTH = 120
@@ -46,12 +50,16 @@ def _draw_grid(
     x = 0.0
     while x <= width_mm:
         px = int(x * scale)
-        pygame.draw.line(surface, _GRID_COLOR, (px, 0), (px, surface.get_height()))
+        pygame.draw.line(
+            surface, _GRID_COLOR, (px, 0), (px, surface.get_height())
+        )
         x += spacing_mm
     y = 0.0
     while y <= height_mm:
         py = int(y * scale)
-        pygame.draw.line(surface, _GRID_COLOR, (0, py), (surface.get_width(), py))
+        pygame.draw.line(
+            surface, _GRID_COLOR, (0, py), (surface.get_width(), py)
+        )
         y += spacing_mm
 
 
@@ -95,9 +103,7 @@ def main(argv: list[str] | None = None) -> int:
                 lambda: deque(maxlen=_TRAIL_LENGTH)
             )
             show_trails = False
-            frame_count = 0
-
-            for frame in dev.frames():
+            for frame_count, frame in enumerate(dev.frames()):
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         pygame.quit()
@@ -111,7 +117,6 @@ def main(argv: list[str] | None = None) -> int:
                             if not show_trails:
                                 trails.clear()
 
-                frame_count += 1
                 screen.fill(_BG_COLOR)
                 _draw_grid(screen, info.width_mm, info.height_mm, args.scale)
 
@@ -147,7 +152,9 @@ def main(argv: list[str] | None = None) -> int:
                                 )
 
                     if c.state == CONTACT_END:
-                        pygame.draw.circle(screen, (80, 80, 80), (px, py), radius_px, 1)
+                        pygame.draw.circle(
+                            screen, (80, 80, 80), (px, py), radius_px, 1
+                        )
                     else:
                         pygame.draw.circle(screen, color, (px, py), radius_px)
                         highlight = (

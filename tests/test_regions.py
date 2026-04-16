@@ -9,7 +9,6 @@ import pytest
 
 from sensel_morph import (
     PressureCurve,
-    Profile,
     ProfileError,
     Rect,
     Region,
@@ -18,7 +17,6 @@ from sensel_morph import (
     load_profile,
     regions_from_yaml,
 )
-
 
 _SENSOR_INFO = SensorInfo(
     max_contacts=16, num_rows=105, num_cols=185, width_mm=250.0, height_mm=140.0
@@ -113,7 +111,11 @@ class TestPressureCurve:
 
 class TestLoadProfile:
     def test_loads_tablet_default(self) -> None:
-        path = Path(__file__).resolve().parents[1] / "profiles" / "tablet_default.yaml"
+        path = (
+            Path(__file__).resolve().parents[1]
+            / "profiles"
+            / "tablet_default.yaml"
+        )
         profile = load_profile(path)
         assert profile.name == "tablet_default"
         assert profile.kind == "tablet"
@@ -122,7 +124,9 @@ class TestLoadProfile:
         assert len(profile.regions) == 2
 
     def test_loads_minimal_profile(self) -> None:
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             f.write("name: minimal\nkind: tablet\n")
             f.flush()
             profile = load_profile(Path(f.name))
@@ -130,15 +134,21 @@ class TestLoadProfile:
         assert profile.regions == []
 
     def test_invalid_profile_raises(self) -> None:
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
             f.write("- just\n- a\n- list\n")
             f.flush()
             with pytest.raises(ProfileError, match="mapping"):
                 load_profile(Path(f.name))
 
     def test_active_surface_must_be_four_floats(self) -> None:
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            f.write("name: bad\nkind: tablet\ntablet:\n  active_surface: [1, 2]\n")
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False
+        ) as f:
+            f.write(
+                "name: bad\nkind: tablet\ntablet:\n  active_surface: [1, 2]\n"
+            )
             f.flush()
             with pytest.raises(ProfileError, match="4 floats"):
                 load_profile(Path(f.name))

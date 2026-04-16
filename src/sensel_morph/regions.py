@@ -53,7 +53,10 @@ def regions_from_yaml(data: dict) -> list[Region]:
             Region(
                 name=entry["name"],
                 rect=Rect(
-                    x=float(r["x"]), y=float(r["y"]), w=float(r["w"]), h=float(r["h"])
+                    x=float(r["x"]),
+                    y=float(r["y"]),
+                    w=float(r["w"]),
+                    h=float(r["h"]),
                 ),
                 action=entry.get("action", {}),
             )
