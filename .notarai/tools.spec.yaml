@@ -21,10 +21,10 @@ behaviors:
     given: "a Morph is connected and pygame is available"
     then: "tools/morph_visualizer.py opens a window scaled to the device aspect ratio and draws each contact as a circle whose radius reflects area and opacity/color reflects force."
   - name: morph_tablet_pen_mode
-    given: "--mode pen (default) and the user has uinput permission"
+    given: "--mode pen (default) and the user has uinput permission (via udev/99-sensel.rules or input group)"
     then: "the highest-force contact drives a virtual pen (BTN_TOOL_PEN, ABS_X/Y, ABS_PRESSURE) through evdev.UInput; other contacts are ignored; Krita and GIMP recognize the device with pressure."
   - name: morph_tablet_multitouch_mode
-    given: "--mode multitouch"
+    given: "--mode multitouch and the user has uinput permission (via udev/99-sensel.rules or input group)"
     then: "each contact is mapped to an ABS_MT_* slot and the device appears as a multi-touch digitizer in evtest."
   - name: morph_midi_translates_contacts
     given: "an active MIDI profile and a Morph connected"

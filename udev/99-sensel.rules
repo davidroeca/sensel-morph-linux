@@ -1,0 +1,5 @@
+# Sensel Morph: allow dialout group access to the serial device
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2886", ATTRS{idProduct}=="0001", MODE="0666", GROUP="dialout"
+
+# Allow input group to create virtual input devices (tablet bridge)
+KERNEL=="uinput", MODE="0660", GROUP="input"

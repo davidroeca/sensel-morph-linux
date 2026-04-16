@@ -61,6 +61,9 @@ exclude:
   - "project_idea.md"
 
 artifacts:
+  config:
+    - path: "udev/99-sensel.rules"
+      role: "udev rules granting dialout group access to /dev/ttyACM* and input group access to /dev/uinput for the tablet bridge."
   docs:
     - path: "AGENTS.md"
       role: "Top-level agent instructions; points at notarai workflows."

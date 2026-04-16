@@ -19,7 +19,7 @@ import signal
 import sys
 from pathlib import Path
 
-from evdev import AbsInfo, UInput
+from evdev import AbsInfo, UInput, UInputError
 from evdev.ecodes import (
     ABS_MT_POSITION_X,
     ABS_MT_POSITION_Y,
@@ -78,34 +78,57 @@ def _pen_absinfo_pressure() -> AbsInfo:
 
 
 def _create_pen_device() -> UInput:
-    return UInput(
-        name=_UINPUT_NAME_PEN,
-        events={  # ty: ignore[invalid-argument-type]
-            EV_KEY: [BTN_TOOL_PEN, BTN_TOUCH, BTN_STYLUS, BTN_STYLUS2],
-            EV_ABS: [
-                (ABS_X, AbsInfo(0, 0, _ABS_MAX_X, 0, 0, 0)),
-                (ABS_Y, AbsInfo(0, 0, _ABS_MAX_Y, 0, 0, 0)),
-                (ABS_PRESSURE, AbsInfo(0, 0, _ABS_MAX_PRESSURE, 0, 0, 0)),
-            ],
-        },
-    )
+    try:
+        return UInput(
+            name=_UINPUT_NAME_PEN,
+            events={  # ty: ignore[invalid-argument-type]
+                EV_KEY: [BTN_TOOL_PEN, BTN_TOUCH, BTN_STYLUS, BTN_STYLUS2],
+                EV_ABS: [
+                    (ABS_X, AbsInfo(0, 0, _ABS_MAX_X, 0, 0, 0)),
+                    (ABS_Y, AbsInfo(0, 0, _ABS_MAX_Y, 0, 0, 0)),
+                    (ABS_PRESSURE, AbsInfo(0, 0, _ABS_MAX_PRESSURE, 0, 0, 0)),
+                ],
+            },
+        )
+    except UInputError:
+        sys.exit(
+            "Permission denied: cannot open /dev/uinput.\n"
+            "Install the udev rule and add your user to the input group:\n"
+            "  sudo cp udev/99-sensel.rules /etc/udev/rules.d/\n"
+            "  sudo udevadm control --reload-rules && sudo udevadm trigger\n"
+            "  sudo usermod -aG input $USER\n"
+            "Then log out and back in."
+        )
 
 
 def _create_mt_device(max_slots: int) -> UInput:
-    return UInput(
-        name=_UINPUT_NAME_MT,
-        events={  # ty: ignore[invalid-argument-type]
-            EV_KEY: [BTN_TOUCH, BTN_TOOL_FINGER],
-            EV_ABS: [
-                (ABS_MT_POSITION_X, AbsInfo(0, 0, _ABS_MAX_X, 0, 0, 0)),
-                (ABS_MT_POSITION_Y, AbsInfo(0, 0, _ABS_MAX_Y, 0, 0, 0)),
-                (ABS_MT_PRESSURE, AbsInfo(0, 0, _ABS_MAX_PRESSURE, 0, 0, 0)),
-                (ABS_MT_SLOT, AbsInfo(0, 0, max_slots - 1, 0, 0, 0)),
-                (ABS_MT_TRACKING_ID, AbsInfo(0, 0, max_slots, 0, 0, 0)),
-                (ABS_MT_TOOL_TYPE, AbsInfo(0, 0, 1, 0, 0, 0)),
-            ],
-        },
-    )
+    try:
+        return UInput(
+            name=_UINPUT_NAME_MT,
+            events={  # ty: ignore[invalid-argument-type]
+                EV_KEY: [BTN_TOUCH, BTN_TOOL_FINGER],
+                EV_ABS: [
+                    (ABS_MT_POSITION_X, AbsInfo(0, 0, _ABS_MAX_X, 0, 0, 0)),
+                    (ABS_MT_POSITION_Y, AbsInfo(0, 0, _ABS_MAX_Y, 0, 0, 0)),
+                    (
+                        ABS_MT_PRESSURE,
+                        AbsInfo(0, 0, _ABS_MAX_PRESSURE, 0, 0, 0),
+                    ),
+                    (ABS_MT_SLOT, AbsInfo(0, 0, max_slots - 1, 0, 0, 0)),
+                    (ABS_MT_TRACKING_ID, AbsInfo(0, 0, max_slots, 0, 0, 0)),
+                    (ABS_MT_TOOL_TYPE, AbsInfo(0, 0, 1, 0, 0, 0)),
+                ],
+            },
+        )
+    except UInputError:
+        sys.exit(
+            "Permission denied: cannot open /dev/uinput.\n"
+            "Install the udev rule and add your user to the input group:\n"
+            "  sudo cp udev/99-sensel.rules /etc/udev/rules.d/\n"
+            "  sudo udevadm control --reload-rules && sudo udevadm trigger\n"
+            "  sudo usermod -aG input $USER\n"
+            "Then log out and back in."
+        )
 
 
 def _run_pen(dev: Device, profile: Profile) -> None:

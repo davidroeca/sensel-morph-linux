@@ -14,22 +14,16 @@ uv run python tools/morph_info.py
 
 ## Permissions
 
-Add your user to the `dialout` group so the Morph's `/dev/ttyACM*` node is
-readable:
+Install the udev rules and add your user to the required groups:
 
 ```sh
-sudo usermod -aG dialout $USER
+sudo cp udev/99-sensel.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && sudo udevadm trigger
+sudo usermod -aG dialout $USER   # Morph serial device (/dev/ttyACM*)
+sudo usermod -aG input $USER     # virtual input device (/dev/uinput) for tablet bridge
 ```
 
-For the tablet bridge, add your user to the `input` group so `/dev/uinput` is
-writable:
-
-```sh
-sudo usermod -aG input $USER
-```
-
-Log out and back in (or run `newgrp dialout` / `newgrp input`) for the group
-changes to take effect.
+Log out and back in for the group changes to take effect.
 
 ## Tools
 
