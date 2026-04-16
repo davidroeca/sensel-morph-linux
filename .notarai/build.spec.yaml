@@ -27,8 +27,8 @@ artifacts:
   configs:
     - path: "pyproject.toml"
       role: "uv project metadata, Python version floor, runtime and dev dependencies, console script entry points for tools/."
-    - path: "uv.lock"
-      role: "Pinned dependency graph produced by `uv lock` / `uv sync`."
+    - path: ".python-version"
+      role: "Pins the Python version for uv; currently 3.12."
     - path: ".gitignore"
       role: "Ignores build outputs (libsensel.so, *.o), .venv/, __pycache__/, .pytest_cache/."
   code:

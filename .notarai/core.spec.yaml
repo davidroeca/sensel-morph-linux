@@ -14,12 +14,20 @@ behaviors:
   - name: typed_frame_iteration
     given: "an open Device"
     then: "iterating yields Frame objects containing a list of Contact dataclasses; no ctypes Structure leaks into caller code."
+    tested_by:
+      - path: "tests/test_frames.py"
+        assertion: "Verifies Frame/Contact parsing, immutability, and round-trip serialization."
   - name: region_hit_testing
     given: "a loaded set of regions (rectangles or polygons in normalized device coordinates) and a Contact"
     then: "regions.hit(contact) returns the first matching region or None, stable across frames for a given contact id."
+    tested_by:
+      - path: "tests/test_regions.py"
   - name: config_loading_validates
     given: "a YAML profile on disk"
     then: "config.load(path) returns a validated profile object or raises a clear error naming the offending key."
+    tested_by:
+      - path: "tests/test_regions.py"
+        assertion: "TestLoadProfile and TestPressureCurve classes cover profile loading and validation."
 
 constraints:
   - "All public dataclasses are frozen and use PEP 604 type hints."
@@ -33,6 +41,8 @@ artifacts:
   code:
     - path: "src/sensel_morph/__init__.py"
       role: "Package entry; re-exports Device, Frame, Contact, load_profile."
+    - path: "src/sensel_morph/_libsensel.py"
+      role: "Internal shim: adjusts sys.path so lib/sensel.py is importable as sensel_morph._libsensel.sensel."
     - path: "src/sensel_morph/device.py"
       role: "Context-manager wrapping open/scan-start/scan-stop/close; frame generator."
     - path: "src/sensel_morph/frames.py"
@@ -41,3 +51,19 @@ artifacts:
       role: "YAML region schema (rect/polygon) and hit-testing."
     - path: "src/sensel_morph/config.py"
       role: "YAML profile loader with schema validation and helpful error messages."
+    - path: "src/sensel_morph/cli/__init__.py"
+      role: "CLI sub-package marker."
+    - path: "src/sensel_morph/cli/morph_info.py"
+      role: "Console script entry point for morph-info."
+    - path: "src/sensel_morph/cli/morph_monitor.py"
+      role: "Console script entry point for morph-monitor."
+    - path: "src/sensel_morph/cli/morph_record.py"
+      role: "Console script entry point for morph-record."
+    - path: "src/sensel_morph/cli/morph_visualizer.py"
+      role: "Console script entry point for morph-visualizer."
+    - path: "src/sensel_morph/cli/morph_tablet.py"
+      role: "Console script entry point for morph-tablet."
+    - path: "src/sensel_morph/cli/morph_midi.py"
+      role: "Console script entry point for morph-midi."
+    - path: "src/sensel_morph/midi.py"
+      role: "MIDI mapping engine: contact-to-MIDI translation, note/CC/aftertouch, stateful tracking."

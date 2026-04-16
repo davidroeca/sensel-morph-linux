@@ -1,0 +1,81 @@
+name: midi_drumpads
+kind: midi
+
+midi:
+  max_force: 500.0
+  aftertouch: false
+  velocity_curve:
+    points:
+      - [0.0, 0.0]
+      - [1.0, 1.0]
+
+# 4x4 grid of drum pads mapped to General MIDI percussion (channel 9).
+# Notes follow the GM drum map starting at kick (36) through hi-hat (51).
+regions:
+  # Row 0 (top)
+  - name: pad_0_0
+    rect: { x: 0.0, y: 0.0, w: 0.25, h: 0.25 }
+    action: { type: note, note: 49, channel: 9 }  # Crash Cymbal 1
+
+  - name: pad_1_0
+    rect: { x: 0.25, y: 0.0, w: 0.25, h: 0.25 }
+    action: { type: note, note: 55, channel: 9 }  # Splash Cymbal
+
+  - name: pad_2_0
+    rect: { x: 0.5, y: 0.0, w: 0.25, h: 0.25 }
+    action: { type: note, note: 51, channel: 9 }  # Ride Cymbal 1
+
+  - name: pad_3_0
+    rect: { x: 0.75, y: 0.0, w: 0.25, h: 0.25 }
+    action: { type: note, note: 57, channel: 9 }  # Crash Cymbal 2
+
+  # Row 1
+  - name: pad_0_1
+    rect: { x: 0.0, y: 0.25, w: 0.25, h: 0.25 }
+    action: { type: note, note: 48, channel: 9 }  # Hi Tom
+
+  - name: pad_1_1
+    rect: { x: 0.25, y: 0.25, w: 0.25, h: 0.25 }
+    action: { type: note, note: 47, channel: 9 }  # Mid Tom
+
+  - name: pad_2_1
+    rect: { x: 0.5, y: 0.25, w: 0.25, h: 0.25 }
+    action: { type: note, note: 45, channel: 9 }  # Low Tom
+
+  - name: pad_3_1
+    rect: { x: 0.75, y: 0.25, w: 0.25, h: 0.25 }
+    action: { type: note, note: 43, channel: 9 }  # Floor Tom
+
+  # Row 2
+  - name: pad_0_2
+    rect: { x: 0.0, y: 0.5, w: 0.25, h: 0.25 }
+    action: { type: note, note: 42, channel: 9 }  # Closed Hi-Hat
+
+  - name: pad_1_2
+    rect: { x: 0.25, y: 0.5, w: 0.25, h: 0.25 }
+    action: { type: note, note: 46, channel: 9 }  # Open Hi-Hat
+
+  - name: pad_2_2
+    rect: { x: 0.5, y: 0.5, w: 0.25, h: 0.25 }
+    action: { type: note, note: 38, channel: 9 }  # Snare
+
+  - name: pad_3_2
+    rect: { x: 0.75, y: 0.5, w: 0.25, h: 0.25 }
+    action: { type: note, note: 40, channel: 9 }  # Electric Snare
+
+  # Row 3 (bottom)
+  - name: pad_0_3
+    rect: { x: 0.0, y: 0.75, w: 0.25, h: 0.25 }
+    action: { type: note, note: 36, channel: 9 }  # Bass Drum 1
+
+  - name: pad_1_3
+    rect: { x: 0.25, y: 0.75, w: 0.25, h: 0.25 }
+    action: { type: note, note: 35, channel: 9 }  # Acoustic Bass Drum
+
+  - name: pad_2_3
+    rect: { x: 0.5, y: 0.75, w: 0.25, h: 0.25 }
+    action: { type: note, note: 37, channel: 9 }  # Side Stick
+
+  - name: pad_3_3
+    rect: { x: 0.75, y: 0.75, w: 0.25, h: 0.25 }
+    action: { type: note, note: 39, channel: 9 }  # Hand Clap

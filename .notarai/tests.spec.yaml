@@ -11,12 +11,17 @@ behaviors:
   - name: pure_python_tests_no_hardware
     given: "a fresh checkout with `uv sync`"
     then: "`uv run pytest` passes without a Morph connected and without libsensel.so built."
+    tested_by:
+      - path: "tests/test_frames.py"
+      - path: "tests/test_regions.py"
   - name: hardware_tests_opt_in
     given: "SENSEL_HARDWARE=1 and a connected Morph"
     then: "tests under tests/hardware/ run and verify end-to-end behavior; without the env var, they are skipped."
   - name: frame_fixture_replay
     given: "a recorded JSON frame fixture"
     then: "tests/test_frames.py parses it and asserts expected Contact counts/states, independent of hardware."
+    tested_by:
+      - path: "tests/test_frames.py"
 
 constraints:
   - "No test imports lib.sensel at module import time unless it is clearly a hardware test (skipped by default)."
@@ -25,12 +30,11 @@ constraints:
 artifacts:
   tests:
     - path: "tests/test_regions.py"
-      role: "Unit tests for region hit-testing (rect + polygon)."
-    - path: "tests/test_config.py"
-      role: "Profile loader validation tests, happy path and errors."
+      role: "Unit tests for region hit-testing, pressure curves, and profile loading."
     - path: "tests/test_frames.py"
       role: "Frame/Contact parsing tests against recorded JSON fixtures."
-    - path: "tests/hardware/**"
-      role: "Opt-in hardware-in-the-loop tests (SENSEL_HARDWARE=1)."
-    - path: "tests/fixtures/**"
+    - path: "tests/test_midi.py"
+      role: "MIDI mapping engine tests: note/CC/aftertouch lifecycle, profile loading, multi-contact."
+  data:
+    - path: "tests/fixtures/*"
       role: "Recorded frame data used by pure-Python tests."

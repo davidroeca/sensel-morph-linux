@@ -14,6 +14,9 @@ behaviors:
   - name: morph_monitor_shows_live_contacts
     given: "a Morph is connected"
     then: "tools/morph_monitor.py displays a terminal view of active contacts (id, x/y mm, force g, state) updating at interactive rate."
+  - name: morph_record_dumps_frames
+    given: "a Morph is connected"
+    then: "tools/morph_record.py captures N seconds of contact frames and writes them to a JSON file suitable for offline replay and test fixtures."
   - name: morph_visualizer_renders_contacts
     given: "a Morph is connected and pygame is available"
     then: "tools/morph_visualizer.py opens a window scaled to the device aspect ratio and draws each contact as a circle whose radius reflects area and opacity/color reflects force."
@@ -26,12 +29,15 @@ behaviors:
   - name: morph_midi_translates_contacts
     given: "an active MIDI profile and a Morph connected"
     then: "tools/morph_midi.py opens a virtual port via python-rtmidi and emits NOTE_ON/NOTE_OFF (or CC) events from contact events through the profile's regions, with velocity derived from the force curve."
+    tested_by:
+      - path: "tests/test_midi.py"
+        assertion: "TestMidiEngine covers note lifecycle, aftertouch, CC, and multi-contact scenarios."
   - name: morph_config_roundtrip
     given: "tools/morph_config.py dump > file.yaml; tools/morph_config.py load file.yaml"
     then: "the device's behavior is unchanged; `dump` read after a `load` produces an equivalent file."
 
 constraints:
-  - "Every tool is runnable both as `python tools/<name>.py` and as a console script declared in pyproject.toml."
+  - "Every tool is runnable both as `python tools/<name>.py` (thin delegator) and as a console script declared in pyproject.toml (entry points in src/sensel_morph/cli/)."
   - "Tools exit with 0 on success, nonzero on device or permission errors, and print actionable remediation (e.g., 'add user to dialout group')."
   - "Tools that write to uinput must print a clear message if /dev/uinput is not writable, naming the `input` group fix."
 
@@ -44,6 +50,8 @@ artifacts:
       role: "Device introspection."
     - path: "tools/morph_monitor.py"
       role: "Terminal live contact monitor."
+    - path: "tools/morph_record.py"
+      role: "Frame recorder for JSON fixture capture."
     - path: "tools/morph_visualizer.py"
       role: "Pygame contact visualizer."
     - path: "tools/morph_tablet.py"

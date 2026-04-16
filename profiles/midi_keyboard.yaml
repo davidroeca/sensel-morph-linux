@@ -1,0 +1,67 @@
+name: midi_keyboard
+kind: midi
+
+midi:
+  max_force: 500.0
+  aftertouch: true
+  velocity_curve:
+    points:
+      - [0.0, 0.0]
+      - [0.3, 0.4]
+      - [1.0, 1.0]
+
+# Single-row pseudo-piano: 13 keys spanning one octave (C3-C4).
+# Each key is a narrow vertical strip across the full height.
+# Polyphonic aftertouch is enabled so sustained pressure modulates.
+regions:
+  - name: C3
+    rect: { x: 0.0, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 48, channel: 0 }
+
+  - name: Db3
+    rect: { x: 0.0769, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 49, channel: 0 }
+
+  - name: D3
+    rect: { x: 0.1538, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 50, channel: 0 }
+
+  - name: Eb3
+    rect: { x: 0.2308, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 51, channel: 0 }
+
+  - name: E3
+    rect: { x: 0.3077, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 52, channel: 0 }
+
+  - name: F3
+    rect: { x: 0.3846, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 53, channel: 0 }
+
+  - name: Gb3
+    rect: { x: 0.4615, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 54, channel: 0 }
+
+  - name: G3
+    rect: { x: 0.5385, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 55, channel: 0 }
+
+  - name: Ab3
+    rect: { x: 0.6154, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 56, channel: 0 }
+
+  - name: A3
+    rect: { x: 0.6923, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 57, channel: 0 }
+
+  - name: Bb3
+    rect: { x: 0.7692, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 58, channel: 0 }
+
+  - name: B3
+    rect: { x: 0.8462, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 59, channel: 0 }
+
+  - name: C4
+    rect: { x: 0.9231, y: 0.0, w: 0.0769, h: 1.0 }
+    action: { type: note, note: 60, channel: 0 }
