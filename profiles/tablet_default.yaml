@@ -1,0 +1,21 @@
+name: tablet_default
+kind: tablet
+
+tablet:
+  mode: pen
+  max_force: 500.0
+  pressure_curve:
+    points:
+      - [0.0, 0.0]
+      - [0.15, 0.0]
+      - [0.6, 0.5]
+      - [1.0, 1.0]
+
+regions:
+  - name: left_button
+    rect: { x: 0.0, y: 0.92, w: 0.12, h: 0.08 }
+    action: { type: button, code: BTN_STYLUS }
+
+  - name: right_button
+    rect: { x: 0.12, y: 0.92, w: 0.12, h: 0.08 }
+    action: { type: button, code: BTN_STYLUS2 }
