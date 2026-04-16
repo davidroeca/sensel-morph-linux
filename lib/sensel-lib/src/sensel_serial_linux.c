@@ -75,9 +75,8 @@ int senselSerialReadAvailable(SenselSerialHandle *data, unsigned char *buf, int 
   //select() uses fd + 1
   int ret = select(data->serial_fd + 1, &read_fds, NULL, NULL, &timeout);
 
-  if(ret == -1) //Select error
+  if(ret == -1)
   {
-    perror("Error on select()");
     return -1;
   }
   else if (ret > 0) //We have bytes to read!
@@ -85,13 +84,12 @@ int senselSerialReadAvailable(SenselSerialHandle *data, unsigned char *buf, int 
     ret = read(data->serial_fd, buf, buf_len);
 
     if(ret < 0)
-      perror("read returned -1");
+      return ret;
 
     return ret;
   }
-  else //No data available after timeout
+  else
   {
-    printf("[fd:%d] select() timedout with no data, ret=%d\n", data->serial_fd, ret);
     return 0;
   }
 }
@@ -208,7 +206,6 @@ unsigned char senselSerialOpen(SenselSerialHandle *data, char* com_port)
   d = opendir(SENSEL_SERIAL_DIR);
   if(!d)
   {
-    printf("Could not open %s directory.", SENSEL_SERIAL_DIR);
     return 0;
   }
 
@@ -242,7 +239,6 @@ unsigned char senselSerialOpenDeviceByID(SenselSerialHandle *data, unsigned char
 
   if(!devices_scanned)
   {
-    printf("senselSerialOpenDeviceByID. Need to call senselGetDeviceList first\n");
     return 0;
   }
 
@@ -260,7 +256,6 @@ unsigned char senselSerialOpenDeviceBySerialNum(SenselSerialHandle *data, char *
 
   if(!devices_scanned)
   {
-    printf("senselSerialOpenDeviceBySerialNum. Need to call senselGetDeviceList first\n");
     return 0;
   }
 
@@ -278,7 +273,6 @@ unsigned char senselSerialOpenDeviceByComPort(SenselSerialHandle *data, char *co
 
   if(!devices_scanned)
   {
-    printf("senselSerialOpenByComPort. Need to call senselGetDeviceList first\n");
     return 0;
   }
 
@@ -303,7 +297,6 @@ unsigned char senselSerialScan(SenselDeviceList *list)
   d = opendir(SENSEL_SERIAL_DIR);
   if(!d)
   {
-    printf("Could not open %s directory.", SENSEL_SERIAL_DIR);
     return false;
   }
 
@@ -319,7 +312,6 @@ unsigned char senselSerialScan(SenselDeviceList *list)
        strstr(dir->d_name, "tty.usbmodem") ||
        strstr(dir->d_name, "cu.usbmodem"))
     {
-      printf("Found device: %s\n", dir->d_name);
       strcat(file_name, dir->d_name);
       found_sensor = senselSerialOpen2(&serial, file_name);
       if (found_sensor)

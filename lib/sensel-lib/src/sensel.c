@@ -419,7 +419,6 @@ static unsigned char _senselParseContactFrame(SenselDevice *device, unsigned cha
 
   if(data_size < 1)
   {
-    printf("Unable to parse number of contacts (data_size == %d)\n", data_size);
     return false;
   }
 
@@ -524,7 +523,6 @@ static unsigned char _frameBufferEnsureCapacity(SenselDevice *device, int capaci
 
     if(device->frame_buffer == NULL)
     {
-      printf("Unable to allocate temporary buffer!\n");
       return false;
     }
   }
@@ -567,18 +565,15 @@ unsigned char _senselReadFrame(SenselDevice *device)
   #endif
 	if (!senselSerialReadBytes(&device->sensor_serial, &reg, 1))
 	{
-		printf("SENSEL ERROR: Unable to read reg\n");
 		return false;
 	}
 	if (!senselSerialReadBytes(&device->sensor_serial, &header, 1))
 	{
-		printf("SENSEL ERROR: Unable to read header\n");
 		return false;
 	}
 
   if(!senselSerialReadBytes(&device->sensor_serial, (unsigned char *)&payload_size, 2))
   {
-    printf("SENSEL ERROR: Unable to read packet size\n");
     return false;
   }
 
@@ -586,7 +581,6 @@ unsigned char _senselReadFrame(SenselDevice *device)
   // Note: This may reallocate the buffer so the pointer to it may change
   if(!_frameBufferEnsureAvailability(device, ((int)payload_size)+3))
   {
-    printf("SENSEL ERROR: Unable to allocate buffer\n");
     return false;
   }
 
@@ -595,9 +589,8 @@ unsigned char _senselReadFrame(SenselDevice *device)
   *((unsigned short*)frame_buffer_ptr) = payload_size;
   frame_buffer_ptr += 2;
 
-  if(!senselSerialReadBytes(&device->sensor_serial, frame_buffer_ptr, payload_size + 1)) //read checksum as well
+  if(!senselSerialReadBytes(&device->sensor_serial, frame_buffer_ptr, payload_size + 1))
   {
-    printf("SENSEL ERROR: Unable to read frame!\n");
     return false;
   }
 
@@ -610,7 +603,6 @@ unsigned char _senselReadFrame(SenselDevice *device)
   received_checksum = *frame_buffer_ptr;
   if(checksum != received_checksum)
   {
-    printf("SENSEL ERROR: Checksum failed! (%d != %d) Dumping the buffer.\n", checksum, received_checksum);
     return false;
   }
 
@@ -641,7 +633,6 @@ static unsigned char _senselReadFrames(SenselDevice *device)
     {
       if(!senselSerialReadBytes(&device->sensor_serial, &ack, 1))
       {
-        printf("Failed to receive ack from sensor\n");
         return false;
       }
 
@@ -652,7 +643,6 @@ static unsigned char _senselReadFrames(SenselDevice *device)
       }
       else
       {
-        printf("SENSEL ERROR: Received %d when expecting PT_ASYNC_FRAME.\n", ack);
           return false;
       }
     }
@@ -661,18 +651,16 @@ static unsigned char _senselReadFrames(SenselDevice *device)
   {
     if(!senselSerialReadBytes(&device->sensor_serial, &ack, 1))
     {
-      printf("Failed to receive ack from sensor\n");
       return false;
     }
 
-    if(ack == PT_RVS_ACK) // Non-buffered frame
+    if(ack == PT_RVS_ACK)
     {
       if(!_senselReadFrame(device))
         return false;
     }
     else
     {
-      printf("SENSEL ERROR: Received %d when expecting PT_FRAME.\n", ack);
         return false;
     }
   }
@@ -680,7 +668,6 @@ static unsigned char _senselReadFrames(SenselDevice *device)
   {
     if(!senselSerialReadBytes(&device->sensor_serial, &ack, 1))
     {
-      printf("Failed to receive ack from sensor\n");
       return false;
     }
 
@@ -697,7 +684,6 @@ static unsigned char _senselReadFrames(SenselDevice *device)
 
       if(!senselSerialReadBytes(&device->sensor_serial, &ack, 1))
       {
-        printf("SENSEL ERROR: Failed to receive ack from sensor\n");
         return false;
       }
     }
@@ -710,7 +696,6 @@ static unsigned char _senselReadFrames(SenselDevice *device)
     }
     else
     {
-      printf("SENSEL ERROR: Received %d when expecting PT_BUFFERED_FRAME_END.\n", ack);
       return false;
     }
   }
@@ -729,14 +714,12 @@ SenselStatus WINAPI senselReadSensor(SENSEL_HANDLE handle)
     // Otherwise, we just wait for the data to come in.
     if(!_senselReadFrameStart(device))
     {
-      printf("Error: Couldn't initiate the start of a frame read.\n");
       return SENSEL_ERROR;
     }
   }
 
   if(!_senselReadFrames(device))
   {
-    printf("Error reading frame data.\n");
     return SENSEL_ERROR;
   }
 
@@ -769,7 +752,6 @@ static unsigned char _senselParseFrame(SENSEL_HANDLE handle, SenselFrameData *da
   // Extract the payload size
   if(device->frame_buffer_size < 2)
   {
-    printf("Error: Payload size not found in buffer.\n");
     return false;
   }
 
@@ -783,7 +765,6 @@ static unsigned char _senselParseFrame(SENSEL_HANDLE handle, SenselFrameData *da
   // Extract the content bit mask and lost frame count
   if(frame_data_size < 2)
   {
-    printf("Error: Frame doesn't have content bit mask and/or lost frame count.\n");
     return false;
   }
 
@@ -818,7 +799,6 @@ static unsigned char _senselParseFrame(SENSEL_HANDLE handle, SenselFrameData *da
 
 		if (!_senselParseContactFrame(device, frame_data_ptr, frame_data_size, data->contacts, &data->n_contacts, &num_decompressed_bytes))
 		{
-			printf("Error while decompressing contacts!\n");
 			return false;
 		}
 		frame_data_ptr += num_decompressed_bytes;
@@ -854,7 +834,6 @@ static unsigned char _senselParseFrame(SENSEL_HANDLE handle, SenselFrameData *da
 
     if(senselDecompressFrame(handle, frame_data_ptr, frame_data_size, content_bit_mask, data, &decompress_bytes_read))
     {
-      printf("Error while decompressiong data\n");
       return false;
 
     }
@@ -870,7 +849,6 @@ static unsigned char _senselParseFrame(SENSEL_HANDLE handle, SenselFrameData *da
   // Verify that the frame size was correct
   if(frame_data_size != 0)
   {
-    printf("Error while decompressing frame. %d unread bytes left in buffer.\n", frame_data_size);
     return false;
   }
 
@@ -892,7 +870,6 @@ SenselStatus WINAPI senselGetFrame(SENSEL_HANDLE handle, SenselFrameData *data)
   if(device->num_buffered_frames <= 0)
   {
     return SENSEL_ERROR;
-    printf("Error: No frames available.\n");
   }
 
   if(!_senselParseFrame(handle, data))
@@ -920,7 +897,6 @@ SenselStatus WINAPI senselSetBufferControl(SENSEL_HANDLE handle, unsigned char n
   status = senselWriteReg(handle, SENSEL_REG_SCAN_BUFFER_CONTROL, 1, &num);
   if(status != SENSEL_OK)
   {
-    printf("Error: Unable to set num_buffers.\n");
     return status;
   }
 
@@ -1253,7 +1229,6 @@ static SenselStatus _senselInitHandle(SENSEL_HANDLE handle)
   device->frame_buffer = (unsigned char*)malloc(FRAME_BUFFER_INITIAL_CAPACITY*sizeof(unsigned char));
   if(!device->frame_buffer)
   {
-    printf("Error allocating frame buffer.\n");
     return SENSEL_ERROR;
   }
   device->frame_buffer_capacity = FRAME_BUFFER_INITIAL_CAPACITY;
@@ -1277,7 +1252,7 @@ static SenselStatus _senselInitHandle(SENSEL_HANDLE handle)
     device->led_array = malloc(device->num_leds * device->led_reg_size * sizeof(unsigned char));
     if (!device->led_array)
     {
-      printf("Error allocating memory for LED array\n");
+      return SENSEL_ERROR;
     }
     status = _senselGetAllLEDBrightness(handle);
     if (status != SENSEL_OK)
@@ -1348,7 +1323,6 @@ SenselStatus WINAPI senselOpenDeviceByID(SENSEL_HANDLE *handle, unsigned char id
   status = senselSoftReset(*handle);
   if (status != SENSEL_OK)
   {
-    printf("Error resetting sensor settings.\n");
     goto error;
   }
 
@@ -1377,7 +1351,6 @@ SenselStatus WINAPI senselOpenDeviceBySerialNum(SENSEL_HANDLE *handle, unsigned 
   status = senselSoftReset(*handle);
   if (status != SENSEL_OK)
   {
-    printf("Error resetting sensor settings.\n");
     goto error;
   }
 
@@ -1406,7 +1379,6 @@ SenselStatus WINAPI senselOpenDeviceByComPort(SENSEL_HANDLE *handle, unsigned ch
   status = senselSoftReset(*handle);
   if (status != SENSEL_OK)
   {
-    printf("Error resetting sensor settings.\n");
     goto error;
   }
 
@@ -1436,13 +1408,11 @@ SenselStatus WINAPI senselOpen(SENSEL_HANDLE *handle)
   status = senselSoftReset(*handle);
   if (status != SENSEL_OK)
   {
-    printf("Error resetting sensor settings.\n");
     goto error;
   }
 
   return SENSEL_OK;
 error:
-  printf("Error\n");
   free(device);
   return SENSEL_ERROR;
 }

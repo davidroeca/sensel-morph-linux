@@ -59,7 +59,6 @@ SenselStatus _senselReadReg(SENSEL_HANDLE handle, SenselSerialHandle *serial, un
     {
       if(!_senselReadFrame(device))
       {
-        printf("SENSEL ERROR: Error reading async frame.\n");
       }
 
       // Get the new ack
@@ -137,7 +136,6 @@ SenselStatus _senselWriteReg(SENSEL_HANDLE handle, SenselSerialHandle *serial, u
     {
       if(!_senselReadFrame(device))
       {
-        printf("SENSEL ERROR: Error reading async frame.\n");
       }
 
       // Get the new ack
